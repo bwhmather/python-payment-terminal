@@ -151,6 +151,8 @@ class BBSMsgRouterTerminal(Terminal):
         try:
             while not self._shutdown:
                 message = self._send_queue.get()
+                if message is None:
+                    return
                 if message.set_running_or_notify_cancel():
                     message.send(self._port)
 
@@ -167,6 +169,7 @@ class BBSMsgRouterTerminal(Terminal):
         with self._shutdown_lock:
             if not self._shutdown:
                 self._shutdown = True
+                self._send_queue.put(None)
                 self._port.close()
 
                 self._send_thread.join()
