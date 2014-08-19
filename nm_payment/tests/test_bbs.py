@@ -1,7 +1,8 @@
 import io
 import unittest
+import threading
 
-from nm_payment.drivers.bbs import read_frame
+from nm_payment.drivers.bbs import read_frame, BBSMsgRouterTerminal
 
 
 class TestBBS(unittest.TestCase):
@@ -20,3 +21,18 @@ class TestBBS(unittest.TestCase):
             pass
         else:
             self.fail()
+
+    def test_startup_shutdown(self):
+        class CloseableFile(object):
+            def __init__(self):
+                self._closed = threading.Event()
+
+            def read(self, *args, **kwargs):
+                self._closed.wait()
+                raise ValueError()
+
+            def close(self):
+                self._closed.set()
+
+        terminal = BBSMsgRouterTerminal(CloseableFile())
+        terminal.shutdown()
