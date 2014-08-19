@@ -140,7 +140,7 @@ class BBSMsgRouterTerminal(Terminal):
                     # individual handlers can shut down the terminal on error
                     # no need to shut down as framing should still be intact
                     log.exception("error handling message from terminal")
-        except:
+        except Exception:
             log.exception("error receiving data")
             self.shutdown_async()
             raise
@@ -156,7 +156,7 @@ class BBSMsgRouterTerminal(Terminal):
                         self._response_queue.put(message)
                     else:
                         message.set_result(None)
-        except:
+        except Exception:
             log.exception("error sending data")
             self.shutdown_async()
             raise
