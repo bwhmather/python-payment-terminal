@@ -83,7 +83,9 @@ class BBSMsgRouterTerminal(Terminal):
     def _request(self, message):
         """ Send a request to the card reader
 
-        :returns: a Future that will yield the response
+        :param message: bytestring to send to the ITU
+
+        :return: a Future that will yield the response
         """
         request = _Request(message)
         self._send_queue.put(request)
@@ -92,7 +94,9 @@ class BBSMsgRouterTerminal(Terminal):
     def _respond(self, message):
         """ Respond to a request from the card reader
 
-        :returns: a future that will yield None once the response has been sent
+        :param message: bytestring to send to the ITU
+
+        :return: a future that will yield None once the response has been sent
         """
         response = _Response(message)
         self._send_queue.put(response)
@@ -143,8 +147,9 @@ class BBSMsgRouterTerminal(Terminal):
                     # no need to shut down as framing should still be intact
                     log.exception("error handling message from terminal")
         except Exception:
-            log.exception("error receiving data")
-            self.shutdown_async()
+            if not self._shutdown:
+                log.exception("error receiving data")
+                self.shutdown_async()
 
     def _send_loop(self):
         try:
@@ -162,10 +167,15 @@ class BBSMsgRouterTerminal(Terminal):
                     else:
                         message.set_result(None)
         except Exception:
-            log.exception("error sending data")
-            self.shutdown_async()
+            if not self._shutdown:
+                log.exception("error sending data")
+                self.shutdown_async()
 
     def shutdown(self):
+        """ Closes connection to the ITU and cleans up.
+        Can be called multiple times safely.
+        Will block until everything is cleaned up.
+        """
         with self._shutdown_lock:
             if not self._shutdown:
                 self._shutdown = True
@@ -187,6 +197,8 @@ class BBSMsgRouterTerminal(Terminal):
                     message.cancel()
 
     def shutdown_async(self):
+        """ Shutdown without blocking.
+        """
         Thread(target=self.shutdown)
 
 
