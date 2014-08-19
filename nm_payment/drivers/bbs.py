@@ -31,20 +31,20 @@ class TerminalError(Exception):
     pass
 
 
-class Message(Future):
+class _Message(Future):
     def __init__(self, data):
-        super(Message, self).__init__()
+        super(_Message, self).__init__()
         self._data = data
 
     def send(self, port):
         port.write(self._data)
 
 
-class Response(Message):
+class _Response(_Message):
     expects_response = False
 
 
-class Request(Message):
+class _Request(_Message):
     expects_response = True
 
 
@@ -73,7 +73,7 @@ class BBSMsgRouterTerminal(Terminal):
 
         :returns: a Future that will yield the response
         """
-        request = Request(message)
+        request = _Request(message)
         self._send_queue.put(request)
         return request
 
@@ -82,7 +82,7 @@ class BBSMsgRouterTerminal(Terminal):
 
         :returns: a future that will yield None once the response has been sent
         """
-        response = Response(message)
+        response = _Response(message)
         self._send_queue.put(response)
         return response
 
