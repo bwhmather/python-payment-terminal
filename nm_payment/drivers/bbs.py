@@ -145,7 +145,6 @@ class BBSMsgRouterTerminal(Terminal):
         except Exception:
             log.exception("error receiving data")
             self.shutdown_async()
-            raise
 
     def _send_loop(self):
         try:
@@ -165,7 +164,6 @@ class BBSMsgRouterTerminal(Terminal):
         except Exception:
             log.exception("error sending data")
             self.shutdown_async()
-            raise
 
     def shutdown(self):
         with self._shutdown_lock:
