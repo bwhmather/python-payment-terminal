@@ -76,6 +76,15 @@ class BBSMsgRouterTerminal(Terminal):
         self._send_queue.put(request)
         return request
 
+    def _respond(self, message):
+        """ Respond to a request from the card reader
+
+        :returns: a future that will yield None once the response has been sent
+        """
+        response = Response(message)
+        self._send_queue.put(response)
+        return response
+
     def _on_req_display_text(self, data):
         raise NotImplementedError()
 
