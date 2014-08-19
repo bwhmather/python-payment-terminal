@@ -3,7 +3,7 @@ import struct
 import socket
 from urllib.parse import urlparse
 from concurrent.futures import Future
-from threading import Thread, Condition
+from threading import Thread, Lock
 
 import logging
 log = logging.getLogger('nm_payment')
@@ -55,7 +55,7 @@ class BBSMsgRouterTerminal(Terminal):
         self._port = port
 
         self._shutdown = False
-        self._shutdown_lock = Condition()
+        self._shutdown_lock = Lock()
 
         # A queue of Message futures to be sent from the send thread
         self._send_queue = queue.Queue()
@@ -163,12 +163,7 @@ class BBSMsgRouterTerminal(Terminal):
 
     def shutdown(self):
         with self._shutdown_lock:
-            if self._shutdown:
-                # another thread is already trying to shutdown the terminal
-                # block until it finishes
-                self._shutdown_lock.wait()
-            else:
-                # shutdown the terminal and notify all waiting threads
+            if not self._shutdown:
                 self._shutdown = True
                 self._port.close()
 
@@ -183,8 +178,6 @@ class BBSMsgRouterTerminal(Terminal):
                     message = self._response_queue.get()
                     # TODO too late to cancel
                     message.cancel()
-
-                self._shutdown_lock.notify_all()
 
     def shutdown_async(self):
         Thread(target=self.shutdown)
