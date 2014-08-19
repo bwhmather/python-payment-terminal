@@ -52,6 +52,18 @@ class BBSMsgRouterTerminal(Terminal):
     def __init__(self, port):
         super(BBSMsgRouterTerminal, self).__init__()
 
+        self._RESPONSE_CODES = {
+            0x41: self._on_req_display_text,
+            0x42: self._on_req_print_text,
+            0x43: self._on_req_reset_timer,
+            0x44: self._on_req_local_mode,
+            0x46: self._on_req_keyboard_input,
+            0x49: self._on_req_send_data,
+            0x5b: self._on_ack,
+            0x60: self._on_req_device_attr,
+            0x62: self._on_ack_device_attr,
+        }
+
         self._port = port
 
         self._shutdown = False
@@ -125,17 +137,7 @@ class BBSMsgRouterTerminal(Terminal):
                 header, body = parse_header(frame)
 
                 try:
-                    {
-                        0x41: self._on_req_display_text,
-                        0x42: self._on_req_print_text,
-                        0x43: self._on_req_reset_timer,
-                        0x44: self._on_req_local_mode,
-                        0x46: self._on_req_keyboard_input,
-                        0x49: self._on_req_send_data,
-                        0x5b: self._on_ack,
-                        0x60: self._on_req_device_attr,
-                        0x62: self._on_ack_device_attr,
-                    }[header](body)
+                    self._RESPONSE_CODES[header](body)
                 except Exception:
                     # individual handlers can shut down the terminal on error
                     # no need to shut down as framing should still be intact
