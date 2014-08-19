@@ -152,6 +152,8 @@ class BBSMsgRouterTerminal(Terminal):
             while not self._shutdown:
                 message = self._send_queue.get()
                 if message is None:
+                    # shutdown will push None onto the send queue to stop send
+                    # loop from blocking on get forever
                     return
                 if message.set_running_or_notify_cancel():
                     message.send(self._port)
@@ -169,6 +171,8 @@ class BBSMsgRouterTerminal(Terminal):
         with self._shutdown_lock:
             if not self._shutdown:
                 self._shutdown = True
+                # send loop will block trying to fetch items from it's queue
+                # forever unless we push something onto it
                 self._send_queue.put(None)
                 self._port.close()
 
