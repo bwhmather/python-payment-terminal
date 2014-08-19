@@ -56,7 +56,9 @@ class BBSMsgRouterTerminal(Terminal):
 
         self._shutdown = False
 
+        # A queue of Message futures to be sent from the send thread
         self._send_queue = queue.Queue()
+        # A queue of futures expecting a response from the card reader
         self._response_queue = queue.Queue()
 
         self._send_thread = Thread(target=self._send_loop, daemon=True)
@@ -66,6 +68,10 @@ class BBSMsgRouterTerminal(Terminal):
         self._receive_thread.start()
 
     def _request(self, message):
+        """ Send a request to the card reader
+
+        :returns: a Future that will yield the response
+        """
         request = Request(message)
         self._send_queue.put(request)
         return request
