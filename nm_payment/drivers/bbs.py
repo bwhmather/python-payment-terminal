@@ -3,7 +3,7 @@ import struct
 import socket
 from urllib.parse import urlparse
 from concurrent.futures import Future
-from threading import Thread
+from threading import Thread, Condition
 
 import logging
 log = logging.getLogger('nm_payment')
@@ -55,6 +55,7 @@ class BBSMsgRouterTerminal(Terminal):
         self._port = port
 
         self._shutdown = False
+        self._shutdown_lock = Condition()
 
         # A queue of Message futures to be sent from the send thread
         self._send_queue = queue.Queue()
@@ -118,54 +119,73 @@ class BBSMsgRouterTerminal(Terminal):
         raise NotImplementedError()
 
     def _receive_loop(self):
-        while not self._shutdown:
-            frame = read_frame(self._port)
-            header, body = parse_header(frame)
+        try:
+            while not self._shutdown:
+                frame = read_frame(self._port)
+                header, body = parse_header(frame)
 
-            try:
-                {
-                    0x41: self._on_req_display_text,
-                    0x42: self._on_req_print_text,
-                    0x43: self._on_req_reset_timer,
-                    0x44: self._on_req_local_mode,
-                    0x46: self._on_req_keyboard_input,
-                    0x49: self._on_req_send_data,
-                    0x5b: self._on_ack,
-                    0x60: self._on_req_device_attr,
-                    0x62: self._on_ack_device_attr,
-                }[header](body)
-            except Exception:
-                # individual handlers can shut down the terminal on error
-                # no need to shut down as framing should still be intact
-                log.exception("error handling message from terminal")
+                try:
+                    {
+                        0x41: self._on_req_display_text,
+                        0x42: self._on_req_print_text,
+                        0x43: self._on_req_reset_timer,
+                        0x44: self._on_req_local_mode,
+                        0x46: self._on_req_keyboard_input,
+                        0x49: self._on_req_send_data,
+                        0x5b: self._on_ack,
+                        0x60: self._on_req_device_attr,
+                        0x62: self._on_ack_device_attr,
+                    }[header](body)
+                except Exception:
+                    # individual handlers can shut down the terminal on error
+                    # no need to shut down as framing should still be intact
+                    log.exception("error handling message from terminal")
+        except:
+            self.shutdown_async()
+            raise
 
     def _send_loop(self):
-        while not self._shutdown:
-            message = self._send_queue.get()
-            if message.set_running_or_notify_cancel():
-                message.send(self._port)
+        try:
+            while not self._shutdown:
+                message = self._send_queue.get()
+                if message.set_running_or_notify_cancel():
+                    message.send(self._port)
 
-                if message.expects_response:
-                    self._response_queue.put(message)
-                else:
-                    message.set_result(None)
+                    if message.expects_response:
+                        self._response_queue.put(message)
+                    else:
+                        message.set_result(None)
+        except:
+            self.shutdown_async()
+            raise
 
     def shutdown(self):
-        # TODO make impossible to call twice
-        self._shutdown = True
-        self._port.close()
+        with self._shutdown_lock:
+            if self._shutdown:
+                # another thread is already trying to shutdown the terminal
+                # block until it finishes
+                self._shutdown_lock.wait()
+            else:
+                # shutdown the terminal and notify all waiting threads
+                self._shutdown = True
+                self._port.close()
 
-        self._send_thread.join()
-        self._receive_thread.join()
+                self._send_thread.join()
+                self._receive_thread.join()
 
-        while not self._send_queue.empty():
-            message = self._send_queue.get()
-            message.cancel()
+                while not self._send_queue.empty():
+                    message = self._send_queue.get()
+                    message.cancel()
 
-        while not self._response_queue.empty():
-            message = self._response_queue.get()
-            # TODO too late to cancel
-            message.cancel()
+                while not self._response_queue.empty():
+                    message = self._response_queue.get()
+                    # TODO too late to cancel
+                    message.cancel()
+
+                self._shutdown_lock.notify_all()
+
+    def shutdown_async(self):
+        Thread(target=self.shutdown)
 
 
 def open_tcp(uri, *args, **kwargs):
