@@ -12,10 +12,10 @@ from nm_payment.base import Terminal
 
 
 def read_frame(port):
-    header = port.read(1)
+    header = port.read(2)
     if len(header) == 0:
         raise Exception("end of file")
-    size, = struct.unpack('B', header)
+    size, = struct.unpack('>H', header)
     assert size > 1
     frame = port.read(size)
     if len(frame) < size:
