@@ -149,7 +149,7 @@ class BBSMsgRouterTerminal(Terminal):
         except Exception:
             if not self._shutdown:
                 log.exception("error receiving data")
-                self.shutdown_async()
+                self._shutdown_async()
 
     def _send_loop(self):
         try:
@@ -169,7 +169,7 @@ class BBSMsgRouterTerminal(Terminal):
         except Exception:
             if not self._shutdown:
                 log.exception("error sending data")
-                self.shutdown_async()
+                self._shutdown_async()
 
     def shutdown(self):
         """ Closes connection to the ITU and cleans up.
@@ -196,7 +196,7 @@ class BBSMsgRouterTerminal(Terminal):
                     # TODO too late to cancel
                     message.cancel()
 
-    def shutdown_async(self):
+    def _shutdown_async(self):
         """ Shutdown without blocking.
         """
         Thread(target=self.shutdown)
