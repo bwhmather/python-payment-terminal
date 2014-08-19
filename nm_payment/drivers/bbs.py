@@ -172,9 +172,9 @@ class BBSMsgRouterTerminal(Terminal):
                 self._shutdown_async()
 
     def shutdown(self):
-        """ Closes connection to the ITU and cleans up.
-        Can be called multiple times safely.
-        Will block until everything is cleaned up.
+        """ Closes connection to the ITU and cancels all requests.
+        Threadsafe and can be called multiple times safely.
+        Will block until everything has been cleaned up.
         """
         with self._shutdown_lock:
             if not self._shutdown:
