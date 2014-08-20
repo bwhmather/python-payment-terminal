@@ -122,6 +122,9 @@ class BBSMsgRouterTerminal(Terminal):
 
     def _on_ack(self, data):
         request = self._response_queue.get()
+        if request is None:
+            # terminal has been shut down. bail
+            return
         response_code = struct.unpack('>I', data)
         if response_code == 0x3030:
             request.set_result(None)
@@ -182,6 +185,10 @@ class BBSMsgRouterTerminal(Terminal):
                 # send loop will block trying to fetch items from it's queue
                 # forever unless we push something onto it
                 self._send_queue.put(None)
+                # response queue could hang if the send and receive sides have
+                # got out of sync.  Shouldn't happen but best to make sure
+                self._response_queue.put(None)
+
                 self._port.close()
 
                 self._send_thread.join()
@@ -194,8 +201,9 @@ class BBSMsgRouterTerminal(Terminal):
 
                 while not self._response_queue.empty():
                     message = self._response_queue.get()
-                    # TODO too late to cancel
-                    message.cancel()
+                    if message is not None:
+                        # TODO too late to cancel
+                        message.cancel()
 
     def _shutdown_async(self):
         """ Shutdown without blocking.
