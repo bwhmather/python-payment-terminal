@@ -189,7 +189,8 @@ class BBSMsgRouterTerminal(Terminal):
 
                 while not self._send_queue.empty():
                     message = self._send_queue.get()
-                    message.cancel()
+                    if message is not None:
+                        message.cancel()
 
                 while not self._response_queue.empty():
                     message = self._response_queue.get()
