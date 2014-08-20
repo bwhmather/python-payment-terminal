@@ -28,6 +28,14 @@ def parse_header(message):
 
 
 class TerminalError(Exception):
+    """ Base class for error messages responses from the ITU
+    """
+    pass
+
+
+class ResponseInterruptedError(Exception):
+    """ Request was sent but connection was closed before receiving a response
+    """
     pass
 
 
@@ -202,8 +210,7 @@ class BBSMsgRouterTerminal(Terminal):
                 while not self._response_queue.empty():
                     message = self._response_queue.get()
                     if message is not None:
-                        # TODO too late to cancel
-                        message.cancel()
+                        message.set_exception(ResponseInterruptedError())
 
     def _shutdown_async(self):
         """ Shutdown without blocking.
