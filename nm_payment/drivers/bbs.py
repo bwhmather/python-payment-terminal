@@ -27,6 +27,12 @@ def parse_header(message):
     return struct.unpack('B', message[:1]), message[1:]
 
 
+def write_frame(port, data):
+    port.write(struct.pack('>H', len(data)))
+    port.write(data)
+    port.flush()
+
+
 class TerminalError(Exception):
     """ Base class for error messages responses from the ITU
     """
@@ -45,7 +51,7 @@ class _Message(Future):
         self._data = data
 
     def send(self, port):
-        port.write(self._data)
+        write_frame(port, self._data)
 
 
 class _Response(_Message):
