@@ -23,8 +23,8 @@ def read_frame(port):
     return frame
 
 
-def parse_header(message):
-    return struct.unpack('B', message[:1]), message[1:]
+def parse_response_code(message):
+    return struct.unpack('B', message[:1])
 
 
 def write_frame(port, data):
@@ -152,11 +152,11 @@ class BBSMsgRouterTerminal(Terminal):
         try:
             while not self._shutdown:
                 frame = read_frame(self._port)
-                header, body = parse_header(frame)
+                header = parse_response_code(frame)
 
-                log.debug("message recieved: %r" % body)
+                log.debug("message recieved: %r" % frame)
                 try:
-                    self._RESPONSE_CODES[header](body)
+                    self._RESPONSE_CODES[header](frame)
                 except Exception:
                     # individual handlers can shut down the terminal on error
                     # no need to shut down as framing should still be intact
