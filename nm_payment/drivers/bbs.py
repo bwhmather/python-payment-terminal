@@ -48,10 +48,7 @@ class ResponseInterruptedError(Exception):
 class _Message(Future):
     def __init__(self, data):
         super(_Message, self).__init__()
-        self._data = data
-
-    def send(self, port):
-        write_frame(port, self._data)
+        self.data = data
 
 
 class _Response(_Message):
@@ -179,7 +176,7 @@ class BBSMsgRouterTerminal(Terminal):
                     return
                 log.debug("sending message: %r" % message)
                 if message.set_running_or_notify_cancel():
-                    message.send(self._port)
+                    write_frame(self._port, message.data)
 
                     if message.expects_response:
                         self._response_queue.put(message)
