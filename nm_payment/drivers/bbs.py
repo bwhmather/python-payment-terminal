@@ -157,6 +157,7 @@ class BBSMsgRouterTerminal(Terminal):
                 frame = read_frame(self._port)
                 header, body = parse_header(frame)
 
+                log.debug("message recieved: %r" % body)
                 try:
                     self._RESPONSE_CODES[header](body)
                 except Exception:
@@ -176,6 +177,7 @@ class BBSMsgRouterTerminal(Terminal):
                     # shutdown will push None onto the send queue to stop send
                     # loop from blocking on get forever
                     return
+                log.debug("sending message: %r" % message)
                 if message.set_running_or_notify_cancel():
                     message.send(self._port)
 
