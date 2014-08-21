@@ -136,7 +136,7 @@ class BBSMsgRouterTerminal(Terminal):
         if request is None:
             # terminal has been shut down. bail
             return
-        response_code = struct.unpack('>I', data)
+        response_code = struct.unpack('>I', data[1:3])
         if response_code == 0x3030:
             request.set_result(None)
         else:
