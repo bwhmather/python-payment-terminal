@@ -194,6 +194,7 @@ class BBSMsgRouterTerminal(Terminal):
         """
         with self._shutdown_lock:
             if not self._shutdown:
+                log.debug("shutting down")
                 self._shutdown = True
                 # send loop will block trying to fetch items from it's queue
                 # forever unless we push something onto it
@@ -216,6 +217,7 @@ class BBSMsgRouterTerminal(Terminal):
                     message = self._response_queue.get()
                     if message is not None:
                         message.set_exception(ResponseInterruptedError())
+                log.debug("successfully shut down")
 
     def _shutdown_async(self):
         """ Shutdown without blocking.
