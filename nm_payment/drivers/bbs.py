@@ -146,6 +146,12 @@ class BBSMsgRouterTerminal(Terminal):
         raise NotImplementedError()
 
     def _on_ack_device_attr(self, data):
+        request = self._response_queue.get()
+        if request is None:
+            # terminal has been shut down. bail
+            return
+        # TODO
+        request.set_result(None)
         raise NotImplementedError()
 
     def _receive_loop(self):
