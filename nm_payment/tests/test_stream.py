@@ -4,7 +4,7 @@ import threading
 import time
 import unittest
 
-from nm_payment.stream import TimeoutError, _Future, Chain, StreamBuilder
+from nm_payment.stream import TimeoutError, _Future, _Chain, StreamBuilder
 
 
 class TestStream(unittest.TestCase):
@@ -34,12 +34,12 @@ class TestStream(unittest.TestCase):
             pass
 
     def test_chain(self):
-        chain = Chain()
+        chain = _Chain()
         chain.push(2)
         self.assertEqual(chain.wait_result(), 2)
 
     def test_chain_iter(self):
-        head = Chain()
+        head = _Chain()
         chain = head
 
         for i in [1, 2, 3, 4, 5]:
@@ -50,7 +50,7 @@ class TestStream(unittest.TestCase):
 
     def test_memory(self):
         # Make sure that chains don't hold references to previous links
-        chain = Chain()
+        chain = _Chain()
         head = weakref.ref(chain)
         for i in range(100000):
             chain = chain.push(i)
@@ -59,7 +59,7 @@ class TestStream(unittest.TestCase):
 
     def test_iter_memory(self):
         # Make sure that chain iterators do not hold a reference to the head
-        chain = Chain()
+        chain = _Chain()
 
         def push_100000(chain):
             for i in range(100000):

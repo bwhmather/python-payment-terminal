@@ -31,12 +31,12 @@ class _Future(object):
             return self._result
 
 
-class Chain(object):
+class _Chain(object):
     def __init__(self):
         self._next = _Future()
 
     def push(self, value):
-        next_ = Chain()
+        next_ = _Chain()
         self._next.set_result((value, next_))
         return next_
 
@@ -80,7 +80,7 @@ class Stream(object):
 class StreamBuilder(object):
     def __init__(self, initial=None):
         self._lock = Lock()
-        self._chain = Chain()
+        self._chain = _Chain()
         self._chain.push(initial)
 
     def head(self):
