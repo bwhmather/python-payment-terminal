@@ -49,8 +49,7 @@ class TestStream(unittest.TestCase):
         self.assertEqual(list(head), [1, 2, 3, 4, 5])
 
     def test_memory(self):
-        """ Make sure that chains don't hold references to previous links
-        """
+        # Make sure that chains don't hold references to previous links
         chain = Chain()
         head = weakref.ref(chain)
         for i in range(100000):
@@ -59,9 +58,7 @@ class TestStream(unittest.TestCase):
         self.assertIsNone(head())
 
     def test_iter_memory(self):
-        """ Make sure that iterators over chains do not hold a reference to the
-        head of the chain
-        """
+        # Make sure that chain iterators do not hold a reference to the head
         chain = Chain()
 
         def push_100000(chain):
