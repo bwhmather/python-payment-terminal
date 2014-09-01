@@ -9,7 +9,7 @@ import logging
 log = logging.getLogger('nm_payment')
 
 from nm_payment.base import Terminal
-from nm_payment.stream import Chain, Stream
+from nm_payment.stream import StreamBuilder
 
 
 def read_frame(port):
@@ -81,11 +81,7 @@ class BBSMsgRouterTerminal(Terminal):
         self._shutdown = False
         self._shutdown_lock = Lock()
 
-        self._status_lock = Lock()
-        self._status_chain = Chain()
-        # head of chain should always have a result set
-        # TODO not sure what initial value should be
-        self._status_chain.push(None)
+        self._status = StreamBuilder()
 
         # A queue of Message futures to be sent from the send thread
         self._send_queue = queue.Queue()
@@ -99,16 +95,13 @@ class BBSMsgRouterTerminal(Terminal):
         self._receive_thread.start()
 
     def status(self):
-        return self._status_chain.wait_head()
+        return self._status.head()
 
     def status_stream(self):
-        return Stream(self._status_chain)
+        return self._status.stream()
 
     def _update_status(self, status):
-        with self._status_lock:
-            # head of chain should always have a result set
-            self._status_chain = self._status_chain.wait_next()
-            self._status_chain = self._status_chain.push(status)
+        self._status.push(status)
 
     def _request(self, message):
         """ Send a request to the card reader
