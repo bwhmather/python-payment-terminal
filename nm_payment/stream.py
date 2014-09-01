@@ -1,4 +1,4 @@
-from threading import Lock, Condition
+from threading import Condition
 
 
 class TimeoutError(Exception):
