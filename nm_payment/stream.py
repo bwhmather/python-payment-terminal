@@ -56,10 +56,10 @@ class _Chain(object):
         return self.wait(timeout)[1]
 
     def __iter__(self):
-        return Stream(self)
+        return StreamIterator(self)
 
 
-class Stream(object):
+class StreamIterator(object):
     def __init__(self, head):
         self._next = head
 
@@ -77,7 +77,7 @@ class Stream(object):
             raise StopIteration()
 
 
-class StreamBuilder(object):
+class Stream(object):
     def __init__(self, initial=None):
         self._lock = Lock()
         self._chain = _Chain()
@@ -87,7 +87,7 @@ class StreamBuilder(object):
         return self._chain.wait_result()
 
     def stream(self):
-        return Stream(self._chain)
+        return StreamIterator(self._chain)
 
     def push(self, value):
         with self._lock:

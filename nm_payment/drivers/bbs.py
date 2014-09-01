@@ -9,7 +9,7 @@ import logging
 log = logging.getLogger('nm_payment')
 
 from nm_payment.base import Terminal
-from nm_payment.stream import StreamBuilder
+from nm_payment.stream import Stream
 
 
 def read_frame(port):
@@ -81,7 +81,7 @@ class BBSMsgRouterTerminal(Terminal):
         self._shutdown = False
         self._shutdown_lock = Lock()
 
-        self._status = StreamBuilder()
+        self._status = Stream()
 
         # A queue of Message futures to be sent from the send thread
         self._send_queue = queue.Queue()
