@@ -1,4 +1,4 @@
-from threading import Condition
+from threading import Lock, Condition
 
 
 class TimeoutError(Exception):
@@ -75,3 +75,27 @@ class Stream(object):
             return self.wait()
         except ClosedError:
             raise StopIteration()
+
+
+class StreamBuilder(object):
+    def __init__(self, initial=None):
+        self._lock = Lock()
+        self._chain = Chain()
+        self._chain.push(initial)
+
+    def head(self):
+        return self._chain.wait_result()
+
+    def stream(self):
+        return Stream(self._chain)
+
+    def push(self, value):
+        with self._lock:
+            # head of chain should always have a result set
+            self._chain = self._chain.wait_next()
+            self._chain.push(value)
+
+    def close(self):
+        with self._lock:
+            self._chain = self._chain.wait_next()
+            self._chain.close()

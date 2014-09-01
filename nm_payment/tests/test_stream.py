@@ -4,7 +4,7 @@ import threading
 import time
 import unittest
 
-from nm_payment.stream import TimeoutError, _Future, Chain
+from nm_payment.stream import TimeoutError, _Future, Chain, StreamBuilder
 
 
 class TestStream(unittest.TestCase):
@@ -77,3 +77,17 @@ class TestStream(unittest.TestCase):
 
         gc.collect()
         self.assertIsNone(chain())
+
+    def test_builder(self):
+        builder = StreamBuilder()
+        stream = builder.stream()
+
+        self.assertIsNone(next(stream))
+        self.assertIsNone(builder.head())
+
+        for i in [1, 2, 3, 4, 5]:
+            builder.push(i)
+            self.assertEqual(builder.head(), i)
+        builder.close()
+
+        self.assertEqual(list(stream), [1, 2, 3, 4, 5])
