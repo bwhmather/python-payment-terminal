@@ -5,6 +5,10 @@ class TimeoutError(Exception):
     pass
 
 
+class ClosedError(Exception):
+    pass
+
+
 class _Future(object):
     def __init__(self):
         self._completed = False
@@ -36,8 +40,14 @@ class Chain(object):
         self._next.set_result((value, next_))
         return next_
 
+    def close(self):
+        self._next.set_result(None)
+
     def wait(self, timeout=None):
-        return self._next.wait(timeout)
+        result = self._next.wait(timeout)
+        if result is None:
+            raise ClosedError()
+        return result
 
     def wait_result(self, timeout=None):
         return self.wait(timeout)[0]
@@ -61,4 +71,7 @@ class Stream(object):
         return self
 
     def __next__(self):
-        return self.wait()
+        try:
+            return self.wait()
+        except ClosedError:
+            raise StopIteration()

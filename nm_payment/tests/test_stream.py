@@ -1,4 +1,3 @@
-import itertools
 import weakref
 import gc
 import threading
@@ -45,8 +44,9 @@ class TestStream(unittest.TestCase):
 
         for i in [1, 2, 3, 4, 5]:
             chain = chain.push(i)
+        chain.close()
 
-        self.assertEqual(list(itertools.islice(head, 5)), [1, 2, 3, 4, 5])
+        self.assertEqual(list(head), [1, 2, 3, 4, 5])
 
     def test_memory(self):
         """ Make sure that chains don't hold references to previous links
