@@ -3,7 +3,7 @@ import gc
 import threading
 import unittest
 
-from nm_payment.stream import _Chain, Stream
+from nm_payment.stream import _Chain, Stream, StreamIterator
 
 
 class TestStream(unittest.TestCase):
@@ -20,7 +20,7 @@ class TestStream(unittest.TestCase):
             chain = chain.push(i)
         chain.close()
 
-        self.assertEqual(list(head), [1, 2, 3, 4, 5])
+        self.assertEqual(list(StreamIterator(head)), [1, 2, 3, 4, 5])
 
     def test_memory(self):
         # Make sure that chains don't hold references to previous links
@@ -40,7 +40,7 @@ class TestStream(unittest.TestCase):
                 chain = chain.push(i)
         t = threading.Thread(target=push_100000, args=(chain,), daemon=True)
 
-        iterator = iter(chain)
+        iterator = StreamIterator(chain)
         chain = weakref.ref(chain)
 
         t.start()

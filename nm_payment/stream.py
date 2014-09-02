@@ -31,9 +31,6 @@ class _Chain(object):
     def wait_next(self, timeout=None):
         return self.wait(timeout)[1]
 
-    def __iter__(self):
-        return StreamIterator(self)
-
 
 class StreamIterator(object):
     def __init__(self, head):
