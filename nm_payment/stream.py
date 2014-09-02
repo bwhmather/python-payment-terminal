@@ -1,39 +1,14 @@
-from threading import Lock, Condition
-
-
-class TimeoutError(Exception):
-    pass
+from threading import Lock
+from concurrent.futures import Future, CancelledError, TimeoutError
 
 
 class ClosedError(Exception):
     pass
 
 
-class _Future(object):
-    def __init__(self):
-        self._completed = False
-        self._result = None
-        self._condition = Condition()
-
-    def set_result(self, result):
-        with self._condition:
-            if self._completed:
-                raise Exception("result already set")
-            self._completed = True
-            self._result = result
-            self._condition.notify_all()
-
-    def wait(self, timeout=None):
-        with self._condition:
-            if not self._completed:
-                if not self._condition.wait(timeout):
-                    raise TimeoutError()
-            return self._result
-
-
 class _Chain(object):
     def __init__(self):
-        self._next = _Future()
+        self._next = Future()
 
     def push(self, value):
         next_ = _Chain()
@@ -41,11 +16,12 @@ class _Chain(object):
         return next_
 
     def close(self):
-        self._next.set_result(None)
+        self._next.cancel()
 
     def wait(self, timeout=None):
-        result = self._next.wait(timeout)
-        if result is None:
+        try:
+            result = self._next.result(timeout)
+        except CancelledError:
             raise ClosedError()
         return result
 
@@ -99,3 +75,5 @@ class Stream(object):
         with self._lock:
             self._chain = self._chain.wait_next()
             self._chain.close()
+
+__all__ = ['ClosedError', 'TimeoutError', '_Chain', 'Stream']

@@ -1,38 +1,12 @@
 import weakref
 import gc
 import threading
-import time
 import unittest
 
-from nm_payment.stream import TimeoutError, _Future, _Chain, Stream
+from nm_payment.stream import _Chain, Stream
 
 
 class TestStream(unittest.TestCase):
-    def test_future_simple(self):
-        message = _Future()
-        message.set_result(42)
-        self.assertEqual(message.wait(), 42)
-
-    def test_future_wait(self):
-        message = _Future()
-
-        def set_42():
-            # XXX should be sufficient to make sure this gets called after wait
-            time.sleep(0.05)
-            message.set_result(42)
-        t = threading.Thread(target=set_42, daemon=True)
-        t.start()
-
-        self.assertEqual(message.wait(), 42)
-        t.join()
-
-    def test_future_timeout(self):
-        message = _Future()
-        try:
-            message.wait(timeout=0.05)
-        except TimeoutError:
-            pass
-
     def test_chain(self):
         chain = _Chain()
         chain.push(2)
