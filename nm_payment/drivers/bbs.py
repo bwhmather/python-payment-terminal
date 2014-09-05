@@ -46,9 +46,9 @@ class ResponseInterruptedError(Exception):
     pass
 
 
-class BBSMsgRouterTerminalBase(Terminal):
+class BBSTerminalBase(Terminal):
     def __init__(self):
-        super(BBSMsgRouterTerminalBase, self).__init__()
+        super(BBSTerminalBase, self).__init__()
 
         self._REQUEST_CODES = {
             0x41: self._on_req_display_text,
@@ -67,7 +67,7 @@ class BBSMsgRouterTerminalBase(Terminal):
 
     def _request(self, message):
         """ Send a request to the card reader
-        Implemented in ``BBSMsgRouterTerminal``
+        Should be implemented in subclasses.
 
         :param message: bytestring to send to the ITU
 
@@ -77,7 +77,7 @@ class BBSMsgRouterTerminalBase(Terminal):
 
     def _respond(self, message):
         """ Respond to a request from the card reader
-        Implemented in ``BBSMsgRouterTerminal``
+        Should be implemented in subclasses.
 
         :param message: bytestring to send to the ITU
 
@@ -132,7 +132,7 @@ class _Request(_Message):
     expects_response = True
 
 
-class BBSMsgRouterTerminal(BBSMsgRouterTerminalBase):
+class BBSMsgRouterTerminal(BBSTerminalBase):
     def __init__(self, port):
         super(BBSMsgRouterTerminal, self).__init__()
 
