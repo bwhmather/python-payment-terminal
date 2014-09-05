@@ -64,16 +64,19 @@ class BBSMsgRouterTerminal(Terminal):
     def __init__(self, port):
         super(BBSMsgRouterTerminal, self).__init__()
 
-        self._RESPONSE_CODES = {
+        self._REQUEST_CODES = {
             0x41: self._on_req_display_text,
             0x42: self._on_req_print_text,
             0x43: self._on_req_reset_timer,
             0x44: self._on_req_local_mode,
             0x46: self._on_req_keyboard_input,
             0x49: self._on_req_send_data,
-            0x5b: self._on_ack,
             0x60: self._on_req_device_attr,
-            0x62: self._on_ack_device_attr,
+        }
+
+        self._RESPONSE_CODES = {
+            0x5b,  # acknowledge
+            0x62,  # acknowledge device attribute
         }
 
         self._port = port
@@ -157,15 +160,6 @@ class BBSMsgRouterTerminal(Terminal):
     def _on_req_device_attr(self, data):
         raise NotImplementedError()
 
-    def _on_ack_device_attr(self, data):
-        request = self._response_queue.get()
-        if request is None:
-            # terminal has been shut down. bail
-            return
-        # TODO
-        request.set_result(None)
-        raise NotImplementedError()
-
     def _receive_loop(self):
         try:
             while not self._shutdown:
@@ -173,12 +167,21 @@ class BBSMsgRouterTerminal(Terminal):
                 header = parse_response_code(frame)
 
                 log.debug("message recieved: %r" % frame)
-                try:
-                    self._RESPONSE_CODES[header](frame)
-                except Exception:
-                    # individual handlers can shut down the terminal on error
-                    # no need to shut down as framing should still be intact
-                    log.exception("error handling message from terminal")
+                if header in self._RESPONSE_CODES:
+                    try:
+                        request = self._response_queue.get_nowait()
+                    except queue.Empty:
+                        log.error("response has no corresponding request")
+                        raise
+                    request.set_result(frame)
+                else:
+                    try:
+                        self._REQUEST_CODES[header](frame)
+                    except Exception:
+                        # no need to shut down as framing should still be ok.
+                        # individual handlers should shut down the terminal in
+                        # the event of an unrecoverable error
+                        log.exception("error handling message from terminal")
         except Exception:
             if not self._shutdown:
                 log.exception("error receiving data")
