@@ -46,23 +46,9 @@ class ResponseInterruptedError(Exception):
     pass
 
 
-class _Message(Future):
-    def __init__(self, data):
-        super(_Message, self).__init__()
-        self.data = data
-
-
-class _Response(_Message):
-    expects_response = False
-
-
-class _Request(_Message):
-    expects_response = True
-
-
-class BBSMsgRouterTerminal(Terminal):
-    def __init__(self, port):
-        super(BBSMsgRouterTerminal, self).__init__()
+class BBSMsgRouterTerminalBase(Terminal):
+    def __init__(self):
+        super(BBSMsgRouterTerminalBase, self).__init__()
 
         self._REQUEST_CODES = {
             0x41: self._on_req_display_text,
@@ -79,54 +65,25 @@ class BBSMsgRouterTerminal(Terminal):
             0x62,  # acknowledge device attribute
         }
 
-        self._port = port
-
-        self._shutdown = False
-        self._shutdown_lock = Lock()
-
-        self._status = Stream()
-
-        # A queue of Message futures to be sent from the send thread
-        self._send_queue = queue.Queue()
-        # A queue of futures expecting a response from the card reader
-        self._response_queue = queue.Queue()
-
-        self._send_thread = Thread(target=self._send_loop, daemon=True)
-        self._send_thread.start()
-
-        self._receive_thread = Thread(target=self._receive_loop, daemon=True)
-        self._receive_thread.start()
-
-    def status(self):
-        return self._status.head()
-
-    def status_stream(self):
-        return self._status.stream()
-
-    def _update_status(self, status):
-        self._status.push(status)
-
     def _request(self, message):
         """ Send a request to the card reader
+        Implemented in ``BBSMsgRouterTerminal``
 
         :param message: bytestring to send to the ITU
 
         :return: a Future that will yield the response
         """
-        request = _Request(message)
-        self._send_queue.put(request)
-        return request
+        raise NotImplementedError()
 
     def _respond(self, message):
         """ Respond to a request from the card reader
+        Implemented in ``BBSMsgRouterTerminal``
 
         :param message: bytestring to send to the ITU
 
         :return: a future that will yield None once the response has been sent
         """
-        response = _Response(message)
-        self._send_queue.put(response)
-        return response
+        raise NotImplementedError()
 
     def _on_req_display_text(self, data):
         raise NotImplementedError()
@@ -159,6 +116,65 @@ class BBSMsgRouterTerminal(Terminal):
 
     def _on_req_device_attr(self, data):
         raise NotImplementedError()
+
+
+class _Message(Future):
+    def __init__(self, data):
+        super(_Message, self).__init__()
+        self.data = data
+
+
+class _Response(_Message):
+    expects_response = False
+
+
+class _Request(_Message):
+    expects_response = True
+
+
+class BBSMsgRouterTerminal(BBSMsgRouterTerminalBase):
+    def __init__(self, port):
+        super(BBSMsgRouterTerminal, self).__init__()
+
+        self._port = port
+
+        self._shutdown = False
+        self._shutdown_lock = Lock()
+
+        self._status = Stream()
+
+        # A queue of Message futures to be sent from the send thread
+        self._send_queue = queue.Queue()
+        # A queue of futures expecting a response from the card reader
+        self._response_queue = queue.Queue()
+
+        self._send_thread = Thread(target=self._send_loop, daemon=True)
+        self._send_thread.start()
+
+        self._receive_thread = Thread(target=self._receive_loop, daemon=True)
+        self._receive_thread.start()
+
+    def _request(self, message):
+        """ Send a request to the card reader
+
+        :param message: bytestring to send to the ITU
+
+        :return: a Future that will yield the response
+        """
+        request = _Request(message)
+        self._send_queue.put(request)
+        return request
+
+    def _respond(self, message):
+        """ Respond to a request from the card reader
+
+        :param message: bytestring to send to the ITU
+
+        :return: a future that will yield None once the response has been sent
+        """
+        response = _Response(message)
+        self._send_queue.put(response)
+        return response
 
     def _receive_loop(self):
         try:
