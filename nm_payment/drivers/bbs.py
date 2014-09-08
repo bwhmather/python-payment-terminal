@@ -8,7 +8,7 @@ from threading import Thread, Lock
 import logging
 log = logging.getLogger('nm_payment')
 
-from nm_payment.base import Terminal
+from nm_payment.base import Terminal, PaymentSession
 from nm_payment.stream import Stream
 
 
@@ -46,9 +46,70 @@ class ResponseInterruptedError(Exception):
     pass
 
 
-class BBSTerminalBase(Terminal):
-    def __init__(self):
-        super(BBSTerminalBase, self).__init__()
+class BBSSession(object):
+    def __init__(self, terminal):
+        super(BBSSession, self).__init__()
+        self._terminal = terminal
+        self._terminal._set_current_session(self)
+
+    def on_req_display_text(self, data):
+        raise NotImplementedError()
+
+    def on_req_print_text(self, data):
+        raise NotImplementedError()
+
+    def on_req_reset_timer(self, data):
+        raise NotImplementedError()
+
+    def on_req_local_mode(self, data):
+        raise NotImplementedError()
+
+    def on_req_keyboard_input(self, data):
+        raise NotImplementedError()
+
+    def on_req_send_data(self, data):
+        raise NotImplementedError()
+
+    def on_req_device_attr(self, data):
+        raise NotImplementedError()
+
+    def unbind(self):
+        pass
+
+
+class BBSPaymentSession(BBSSession, PaymentSession):
+    def __init__(self, terminal, amount):
+        super(BBSPaymentSession, self).__init__(terminal)
+
+        self._terminal.request("transfer_amount", amount).wait()
+
+    def on_req_local_mode(self, data):
+        pass
+
+    def commit(self):
+        pass
+
+    def cancel(self):
+        pass
+
+
+class _Message(Future):
+    def __init__(self, data):
+        super(_Message, self).__init__()
+        self.data = data
+
+
+class _Response(_Message):
+    expects_response = False
+
+
+class _Request(_Message):
+    expects_response = True
+
+
+class BBSMsgRouterTerminal(Terminal):
+    def __init__(self, port):
+        super(BBSMsgRouterTerminal, self).__init__()
 
         self._REQUEST_CODES = {
             0x41: self._on_req_display_text,
@@ -61,29 +122,36 @@ class BBSTerminalBase(Terminal):
         }
 
         self._RESPONSE_CODES = {
-            0x5b,  # acknowledge
-            0x62,  # acknowledge device attribute
+            0x5b: self._parse_ack,
+            0x62: self._parse_device_attr_ack,
         }
 
-    def _request(self, message):
-        """ Send a request to the card reader
-        Should be implemented in subclasses.
+        self._port = port
 
-        :param message: bytestring to send to the ITU
+        self._shutdown = False
+        self._shutdown_lock = Lock()
 
-        :return: a Future that will yield the response
-        """
-        raise NotImplementedError()
+        self._current_session = None
+        self._current_session_lock = Lock()
 
-    def _respond(self, message):
-        """ Respond to a request from the card reader
-        Should be implemented in subclasses.
+        self._status = Stream()
 
-        :param message: bytestring to send to the ITU
+        # A queue of Message futures to be sent from the send thread
+        self._send_queue = queue.Queue()
+        # A queue of futures expecting a response from the card reader
+        self._response_queue = queue.Queue()
 
-        :return: a future that will yield None once the response has been sent
-        """
-        raise NotImplementedError()
+        self._send_thread = Thread(target=self._send_loop, daemon=True)
+        self._send_thread.start()
+
+        self._receive_thread = Thread(target=self._receive_loop, daemon=True)
+        self._receive_thread.start()
+
+    def _set_current_session(self, session):
+        with self._session_lock:
+            if self._current_session is not None:
+                self._current_session.unbind()
+            self._current_session = session
 
     def _on_req_display_text(self, data):
         raise NotImplementedError()
@@ -103,58 +171,20 @@ class BBSTerminalBase(Terminal):
     def _on_req_send_data(self, data):
         raise NotImplementedError()
 
-    def _on_ack(self, data):
-        request = self._response_queue.get()
-        if request is None:
-            # terminal has been shut down. bail
-            return
-        response_code = struct.unpack('>I', data[1:3])
-        if response_code == 0x3030:
-            request.set_result(None)
-        else:
-            request.set_exception(TerminalError(response_code))
-
     def _on_req_device_attr(self, data):
         raise NotImplementedError()
 
+    def _parse_ack(self, data):
+        response_code = struct.unpack('>I', data[1:3])
+        if response_code == 0x3030:
+            return None
+        else:
+            raise TerminalError(response_code)
 
-class _Message(Future):
-    def __init__(self, data):
-        super(_Message, self).__init__()
-        self.data = data
+    def _parse_device_attr_ack(self, data):
+        return None
 
-
-class _Response(_Message):
-    expects_response = False
-
-
-class _Request(_Message):
-    expects_response = True
-
-
-class BBSMsgRouterTerminal(BBSTerminalBase):
-    def __init__(self, port):
-        super(BBSMsgRouterTerminal, self).__init__()
-
-        self._port = port
-
-        self._shutdown = False
-        self._shutdown_lock = Lock()
-
-        self._status = Stream()
-
-        # A queue of Message futures to be sent from the send thread
-        self._send_queue = queue.Queue()
-        # A queue of futures expecting a response from the card reader
-        self._response_queue = queue.Queue()
-
-        self._send_thread = Thread(target=self._send_loop, daemon=True)
-        self._send_thread.start()
-
-        self._receive_thread = Thread(target=self._receive_loop, daemon=True)
-        self._receive_thread.start()
-
-    def _request(self, message):
+    def request(self, message):
         """ Send a request to the card reader
 
         :param message: bytestring to send to the ITU
@@ -189,15 +219,29 @@ class BBSMsgRouterTerminal(BBSTerminalBase):
                     except queue.Empty:
                         log.error("response has no corresponding request")
                         raise
-                    request.set_result(frame)
-                else:
+
                     try:
-                        self._REQUEST_CODES[header](frame)
-                    except Exception:
+                        response = self._RESPONSE_CODES[header](frame)
+                    except Exception as e:
+                        # TODO possibly just exit
+                        request.set_exception(e)
+                    else:
+                        request.set_result(response)
+                else:
+                    response = b''  # TODO
+                    try:
+                        response = self._REQUEST_CODES[header](frame)
+                        if response is None:
+                            response = self._ack_ok()
+                    except Exception as e:
                         # no need to shut down as framing should still be ok.
                         # individual handlers should shut down the terminal in
                         # the event of an unrecoverable error
                         log.exception("error handling message from terminal")
+                        response = self._ack_exception(e)
+                    finally:
+                        # TODO possibly just exit
+                        self._respond(response)
         except Exception:
             if not self._shutdown:
                 log.exception("error receiving data")
