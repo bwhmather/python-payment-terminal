@@ -283,6 +283,11 @@ class BBSMsgRouterTerminal(Terminal):
             request.set_result(response)
 
     def _receive_loop(self):
+        """ Thread responsible for receiving input from the card reader.
+
+        Reads frames one at a time and either links them to a response or
+        dispatches them to a request handler.
+        """
         try:
             while not self._shutdown:
                 frame = read_frame(self._port)
@@ -297,6 +302,12 @@ class BBSMsgRouterTerminal(Terminal):
                 self._shutdown_async()
 
     def _send_loop(self):
+        """ Thread responsible for output to the card reader.
+
+        The send thread reads messages from send queue and writes them to port.
+        Futures for messages expecting a response are pushed onto the response
+        queue in order that the requests were sent.
+        """
         try:
             while not self._shutdown:
                 message = self._send_queue.get()
