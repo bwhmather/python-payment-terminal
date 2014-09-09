@@ -206,52 +206,62 @@ class BBSMsgRouterTerminal(Terminal):
         self._send_queue.put(response)
         return response
 
+    def _is_response(self, frame):
+        header = parse_response_code(frame)
+        return header in self._RESPONSE_CODES
+
+    def _handle_response(self, frame):
+        header = parse_response_code(frame)
+        try:
+            request = self._response_queue.get_nowait()
+        except queue.Empty:
+            log.error("response has no corresponding request")
+            raise
+
+        try:
+            # decode the response
+            response = self._RESPONSE_CODES[header](frame)
+        except TerminalError as e:
+            # error from ITU.  No need to exit
+            request.set_exception(e)
+        except Exception as e:
+            # other exception.  Need to close the request before
+            # breaking from the loop
+            request.set_exception(e)
+            raise
+        else:
+            request.set_result(response)
+
+    def _handle_request(self, frame):
+        header = parse_response_code(frame)
+        try:
+            response = self._REQUEST_CODES[header](frame)
+            if response is None:
+                response = self._ack_ok()
+
+        except TerminalError as e:
+            # exception is intended for the ITU and shouldn't cause
+            # the driver to shut down
+            log.warning(
+                "error handling message from terminal",
+                exc_info=True
+            )
+            response = self._ack_exception(e)
+        except Exception:
+            # log and break
+            log.exception("critical error while handling message")
+            raise
+        self._respond(response)
+
     def _receive_loop(self):
         try:
             while not self._shutdown:
                 frame = read_frame(self._port)
-                header = parse_response_code(frame)
-
                 log.debug("message recieved: %r" % frame)
-                if header in self._RESPONSE_CODES:
-                    try:
-                        request = self._response_queue.get_nowait()
-                    except queue.Empty:
-                        log.error("response has no corresponding request")
-                        raise
-
-                    try:
-                        # decode the response
-                        response = self._RESPONSE_CODES[header](frame)
-                    except TerminalError as e:
-                        # error from ITU.  No need to exit
-                        request.set_exception(e)
-                    except Exception as e:
-                        # other exception.  Need to close the request before
-                        # breaking from the loop
-                        request.set_exception(e)
-                        raise
-                    else:
-                        request.set_result(response)
+                if self._is_response(frame):
+                    self._handle_response(frame)
                 else:
-                    try:
-                        response = self._REQUEST_CODES[header](frame)
-                        if response is None:
-                            response = self._ack_ok()
-
-                    except TerminalError as e:
-                        # exception is intended for the ITU and shouldn't cause
-                        # the driver to shut down
-                        log.warning(
-                            "error handling message from terminal",
-                            exc_info=True
-                        )
-                        response = self._ack_exception(e)
-                    except Exception:
-                        # log and break
-                        log.exception("critical error while handling message")
-                        raise
-                    self._respond(response)
+                    self._handle_request(frame)
         except Exception:
             if not self._shutdown:
                 log.exception("error receiving data")
