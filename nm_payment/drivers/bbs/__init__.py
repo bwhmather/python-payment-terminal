@@ -56,18 +56,23 @@ class _BBSSession(object):
     def on_req_display_text(
             self, data, *,
             expects_input=False, prompt_customer=False):
+        # TODO
         pass
 
     def on_req_reset_timer(self, data):
+        # TODO
         pass
 
     def on_req_local_mode(self, data):
+        # should be implemented by subclass
         raise NotImplementedError()
 
     def on_req_keyboard_input(self, data):
+        # should be implemented by subclass
         raise NotImplementedError()
 
     def on_req_send_data(self, data):
+        # should be implemented by subclass
         raise NotImplementedError()
 
     def unbind(self):
@@ -81,12 +86,19 @@ class _BBSPaymentSession(_BBSSession, PaymentSession):
         self._terminal.request("transfer_amount", amount).wait()
 
     def on_req_local_mode(self, data):
+        # TODO
         pass
 
     def commit(self):
+        # TODO
         pass
 
     def cancel(self):
+        # TODO
+        pass
+
+    def unbind(self):
+        # TODO
         pass
 
 
@@ -168,6 +180,7 @@ class BBSMsgRouterTerminal(Terminal):
 
         Should only be called by the current session.
         """
+        # TODO
         raise NotImplementedError()
 
     def request_abort(self):
@@ -179,6 +192,7 @@ class BBSMsgRouterTerminal(Terminal):
 
         Should only be called by the current session.
         """
+        # TODO
         raise NotImplementedError()
 
     def request_reversal(self):
@@ -188,6 +202,7 @@ class BBSMsgRouterTerminal(Terminal):
 
         Should only be called by the current session.
         """
+        # TODO
         raise NotImplementedError()
 
     def _respond(self, message):
@@ -237,21 +252,27 @@ class BBSMsgRouterTerminal(Terminal):
         )
 
     def _on_req_print_text(self, data):
+        # TODO
         raise NotImplementedError()
 
     def _on_req_reset_timer(self, data):
+        # TODO
         raise NotImplementedError()
 
     def _on_req_local_mode(self, data):
+        # TODO
         raise NotImplementedError()
 
     def _on_req_keyboard_input(self, data):
+        # TODO
         raise NotImplementedError()
 
     def _on_req_send_data(self, data):
+        # TODO
         raise NotImplementedError()
 
     def _on_req_device_attr(self, data):
+        # TODO
         raise NotImplementedError()
 
     def _handle_request(self, frame):
@@ -283,6 +304,7 @@ class BBSMsgRouterTerminal(Terminal):
             raise TerminalError(response_code)
 
     def _parse_device_attr_ack(self, data):
+        # TODO
         return None
 
     def _is_response(self, frame):
