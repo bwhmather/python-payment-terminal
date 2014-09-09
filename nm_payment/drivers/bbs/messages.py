@@ -135,3 +135,28 @@ def unpack_print_text(data):
             yield ('write', partition)
 
         yield ('cut-through')
+
+
+_reset_timer_format = Struct(
+    '>B'  # CMSG
+    '3s'  # SEC
+)
+
+
+def pack_reset_timer(seconds):
+    seconds = '{:03.0f}'.format(seconds).encode('ascii')
+    if len(seconds) > 3:
+        raise ValueError()
+
+    return _reset_timer_format.pack(0x43, seconds)
+
+
+def unpack_reset_timer(data):
+    header, seconds = _reset_timer_format.unpack(data)
+
+    if header != 0x43:
+        raise ValueError()
+
+    seconds = int(seconds)
+
+    return seconds

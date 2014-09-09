@@ -93,3 +93,23 @@ class TestBBS(unittest.TestCase):
                 ('cut-through'),
             ]
         )
+
+    def test_pack_reset_timer(self):
+        self.assertEqual(messages.pack_reset_timer(60), b'\x43060')
+
+        try:
+            messages.pack_reset_timer(6000)
+        except ValueError:
+            pass
+        else:
+            self.fail()
+
+    def test_unpack_reset_timer(self):
+        self.assertEqual(messages.unpack_reset_timer(b'\x43060'), 60)
+
+        try:
+            messages.unpack_reset_timer(b'\x43abc')
+        except:
+            pass
+        else:
+            self.fail()
