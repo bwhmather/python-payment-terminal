@@ -153,37 +153,6 @@ class BBSMsgRouterTerminal(Terminal):
                 self._current_session.unbind()
             self._current_session = session
 
-    def _on_req_display_text(self, data):
-        raise NotImplementedError()
-
-    def _on_req_print_text(self, data):
-        raise NotImplementedError()
-
-    def _on_req_reset_timer(self, data):
-        raise NotImplementedError()
-
-    def _on_req_local_mode(self, data):
-        raise NotImplementedError()
-
-    def _on_req_keyboard_input(self, data):
-        raise NotImplementedError()
-
-    def _on_req_send_data(self, data):
-        raise NotImplementedError()
-
-    def _on_req_device_attr(self, data):
-        raise NotImplementedError()
-
-    def _parse_ack(self, data):
-        response_code = struct.unpack('>I', data[1:3])
-        if response_code == 0x3030:
-            return None
-        else:
-            raise TerminalError(response_code)
-
-    def _parse_device_attr_ack(self, data):
-        return None
-
     def request(self, message):
         """ Send a request to the card reader
 
@@ -205,6 +174,58 @@ class BBSMsgRouterTerminal(Terminal):
         response = _Response(message)
         self._send_queue.put(response)
         return response
+
+    def _on_req_display_text(self, data):
+        raise NotImplementedError()
+
+    def _on_req_print_text(self, data):
+        raise NotImplementedError()
+
+    def _on_req_reset_timer(self, data):
+        raise NotImplementedError()
+
+    def _on_req_local_mode(self, data):
+        raise NotImplementedError()
+
+    def _on_req_keyboard_input(self, data):
+        raise NotImplementedError()
+
+    def _on_req_send_data(self, data):
+        raise NotImplementedError()
+
+    def _on_req_device_attr(self, data):
+        raise NotImplementedError()
+
+    def _handle_request(self, frame):
+        header = parse_response_code(frame)
+        try:
+            response = self._REQUEST_CODES[header](frame)
+            if response is None:
+                response = self._ack_ok()
+
+        except TerminalError as e:
+            # exception is intended for the ITU and shouldn't cause
+            # the driver to shut down
+            log.warning(
+                "error handling message from terminal",
+                exc_info=True
+            )
+            response = self._ack_exception(e)
+        except Exception:
+            # log and break
+            log.exception("critical error while handling message")
+            raise
+        self._respond(response)
+
+    def _parse_ack(self, data):
+        response_code = struct.unpack('>I', data[1:3])
+        if response_code == 0x3030:
+            return None
+        else:
+            raise TerminalError(response_code)
+
+    def _parse_device_attr_ack(self, data):
+        return None
 
     def _is_response(self, frame):
         header = parse_response_code(frame)
@@ -231,27 +252,6 @@ class BBSMsgRouterTerminal(Terminal):
             raise
         else:
             request.set_result(response)
-
-    def _handle_request(self, frame):
-        header = parse_response_code(frame)
-        try:
-            response = self._REQUEST_CODES[header](frame)
-            if response is None:
-                response = self._ack_ok()
-
-        except TerminalError as e:
-            # exception is intended for the ITU and shouldn't cause
-            # the driver to shut down
-            log.warning(
-                "error handling message from terminal",
-                exc_info=True
-            )
-            response = self._ack_exception(e)
-        except Exception:
-            # log and break
-            log.exception("critical error while handling message")
-            raise
-        self._respond(response)
 
     def _receive_loop(self):
         try:
