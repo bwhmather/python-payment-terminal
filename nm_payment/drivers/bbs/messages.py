@@ -1,5 +1,6 @@
 from struct import Struct
 from collections import namedtuple
+from datetime import datetime
 
 import logging
 log = logging.getLogger('nm_payment')
@@ -160,3 +161,63 @@ def unpack_reset_timer(data):
     seconds = int(seconds)
 
     return seconds
+
+
+_keyboard_input_request_format = Struct(
+    '>B'  # CMSG
+    'B'  # ECHO
+    '2s'  # MIN
+    '2s'  # MAX
+)
+_keyboard_input_request_tuple = namedtuple(
+    'keyboard_input_request', 'echo, min_chars, max_chars'
+)
+
+
+def pack_keyboard_input_request(echo=False, min_chars=0, max_chars=99):
+    min_chars = '{:02.0f}'.format(min_chars).encode('ascii')
+    if len(min_chars) > 2:
+        raise ValueError()
+
+    max_chars = '{:03.0f}'.format(max_chars).encode('ascii')
+    if len(max_chars) > 2:
+        raise ValueError()
+
+    return _keyboard_input_request_format.pack(
+        0x46,
+        0x20 if echo else 0x21,
+        min_chars,
+        max_chars
+    )
+
+
+def unpack_keyboard_input_request(data):
+    header, echo, min_chars, max_chars = \
+        _keyboard_input_request_format.unpack(data)
+
+    if header != 0x46:
+        raise ValueError()
+
+    echo = {
+        0x20: True,
+        0x21: False,
+    }[echo]
+
+    min_chars = int(min_chars)
+    max_chars = int(max_chars)
+
+    return _keyboard_input_request_tuple(
+        echo=echo, min_chars=min_chars, max_chars=max_chars
+    )
+
+
+def pack_keyboard_input(text):
+    return b'0x55' + text.encode('ascii') + b'0'
+
+
+def unpack_keyboard_input(data):
+    header = ord(data[0])
+    if header != 0x55:
+        raise ValueError()
+
+    return data[1:-1].decode('ascii')
