@@ -52,12 +52,6 @@ class BBSSession(object):
         self._terminal = terminal
         self._terminal._set_current_session(self)
 
-    def commit(self):
-        pass
-
-    def cancel(self):
-        pass
-
     def on_req_display_text(self, data):
         raise NotImplementedError()
 
