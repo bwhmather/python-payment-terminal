@@ -157,7 +157,7 @@ class BBSMsgRouterTerminal(Terminal):
         self._receive_thread.start()
 
     def _set_current_session(self, session):
-        with self._session_lock:
+        with self._current_session_lock:
             if self._current_session is not None:
                 self._current_session.unbind()
             self._current_session = session
