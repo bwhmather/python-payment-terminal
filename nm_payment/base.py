@@ -1,6 +1,3 @@
-from abc import ABCMeta
-
-
 class Session(object):
     pass
 
@@ -27,7 +24,7 @@ class PaymentSession(Session):
         raise NotImplementedError()
 
 
-class Terminal(metaclass=ABCMeta):
+class Terminal(object):
     def start_payment(self, amount, *, on_print=None, on_display=None):
         """
         :returns: a new active ``PaymentSession`` object
