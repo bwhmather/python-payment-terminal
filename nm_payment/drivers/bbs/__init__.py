@@ -333,6 +333,14 @@ class BBSMsgRouterTerminal(Terminal):
         else:
             request.set_result(response)
 
+    def _ack_ok(self):
+        # TODO
+        raise NotImplementedError()
+
+    def _ack_exception(self, exception):
+        # TODO
+        raise NotImplementedError()
+
     def _receive_loop(self):
         """ Thread responsible for receiving input from the card reader.
 
