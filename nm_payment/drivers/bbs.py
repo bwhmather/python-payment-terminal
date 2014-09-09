@@ -221,27 +221,37 @@ class BBSMsgRouterTerminal(Terminal):
                         raise
 
                     try:
+                        # decode the response
                         response = self._RESPONSE_CODES[header](frame)
-                    except Exception as e:
-                        # TODO possibly just exit
+                    except TerminalError as e:
+                        # error from ITU.  No need to exit
                         request.set_exception(e)
+                    except Exception as e:
+                        # other exception.  Need to close the request before
+                        # breaking from the loop
+                        request.set_exception(e)
+                        raise
                     else:
                         request.set_result(response)
                 else:
-                    response = b''  # TODO
                     try:
                         response = self._REQUEST_CODES[header](frame)
                         if response is None:
                             response = self._ack_ok()
-                    except Exception as e:
-                        # no need to shut down as framing should still be ok.
-                        # individual handlers should shut down the terminal in
-                        # the event of an unrecoverable error
-                        log.exception("error handling message from terminal")
+
+                    except TerminalError as e:
+                        # exception is intended for the ITU and shouldn't cause
+                        # the driver to shut down
+                        log.warning(
+                            "error handling message from terminal",
+                            exc_info=True
+                        )
                         response = self._ack_exception(e)
-                    finally:
-                        # TODO possibly just exit
-                        self._respond(response)
+                    except Exception:
+                        # log and break
+                        log.exception("critical error while handling message")
+                        raise
+                    self._respond(response)
         except Exception:
             if not self._shutdown:
                 log.exception("error receiving data")
