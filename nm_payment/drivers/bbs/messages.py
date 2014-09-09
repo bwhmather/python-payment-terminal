@@ -163,6 +163,14 @@ def unpack_reset_timer(data):
     return seconds
 
 
+_local_mode_format = Struct(
+    '>B'  # CMSG
+    'B'  # RESULT
+    'B'  # ACC
+    '2s'  # Id
+)
+
+
 def pack_local_mode():
     # TODO
     raise NotImplementedError()
@@ -171,6 +179,47 @@ def pack_local_mode():
 def unpack_local_mode(data):
     # TODO
     raise NotImplementedError()
+
+    header, result, acc, id_ = _local_mode_format.unpack_from(data)
+
+    # rest of data is sent as ';' separated strings.  No trailing ';'
+    pan, timestamp, ver_method, session_num, stan_auth, seq_no, tip = \
+        data[_local_mode_format.size:].split(';')
+
+    if header != 0x44:
+        raise ValueError()
+
+    if result == 0x20:
+        # success
+        pass
+    elif result == 0x21:
+        # failure
+        pass
+    else:
+        raise ValueError()
+
+    acc
+
+    id_
+
+    pan
+
+    timestamp = datetime.strptime(timestamp, '%Y%m%d%H%M%S')
+
+    ver_method = [
+        "pin based",
+        "signature based",
+        "not verified",
+        "loyalty transaction",
+    ][int(ver_method)]
+
+    session_num = int(session_num)
+
+    stan_auth
+
+    seq_no = int(seq_no)
+
+    tip
 
 
 _keyboard_input_request_format = Struct(
