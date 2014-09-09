@@ -163,6 +163,16 @@ def unpack_reset_timer(data):
     return seconds
 
 
+def pack_local_mode():
+    # TODO
+    raise NotImplementedError()
+
+
+def unpack_local_mode(data):
+    # TODO
+    raise NotImplementedError()
+
+
 _keyboard_input_request_format = Struct(
     '>B'  # CMSG
     'B'  # ECHO
@@ -221,3 +231,73 @@ def unpack_keyboard_input(data):
         raise ValueError()
 
     return data[1:-1].decode('ascii')
+
+
+def pack_send_data():
+    # TODO
+    raise NotImplementedError()
+
+
+def unpack_send_data_request(data):
+    # TODO
+    raise NotImplementedError()
+
+
+def pack_transfer_amount():
+    # TODO
+    raise NotImplementedError()
+
+
+def unpack_transfer_amount(data):
+    # TODO
+    raise NotImplementedError()
+
+
+def pack_transfer_card_data():
+    # TODO
+    raise NotImplementedError()
+
+
+def unpack_transfer_card_data(data):
+    # TODO
+    raise NotImplementedError()
+
+
+def pack_administration_request():
+    # TODO
+    raise NotImplementedError()
+
+
+def unpack_administration_request(data):
+    # TODO
+    raise NotImplementedError()
+
+
+def pack_device_attribute_request():
+    # TODO
+    raise NotImplementedError()
+
+
+def unpack_device_attribute_request(data):
+    # TODO
+    raise NotImplementedError()
+
+
+def pack_device_attribute():
+    # TODO
+    raise NotImplementedError()
+
+
+def unpack_device_attribute(data):
+    # TODO
+    raise NotImplementedError()
+
+
+def pack_status():
+    # TODO
+    raise NotImplementedError()
+
+
+def unpack_status():
+    # TODO
+    raise NotImplementedError()
