@@ -210,6 +210,33 @@ class BBSMsgRouterTerminal(Terminal):
         self._send_queue.put(response)
         return response
 
+    def _send_loop(self):
+        """ Thread responsible for output to the card reader.
+
+        The send thread reads messages from send queue and writes them to port.
+        Futures for messages expecting a response are pushed onto the response
+        queue in order that the requests were sent.
+        """
+        try:
+            while not self._shutdown:
+                message = self._send_queue.get()
+                if message is None:
+                    # shutdown will push None onto the send queue to stop send
+                    # loop from blocking on get forever
+                    return
+                log.debug("sending message: %r" % message)
+                if message.set_running_or_notify_cancel():
+                    write_frame(self._port, message.data)
+
+                    if message.expects_response:
+                        self._response_queue.put(message)
+                    else:
+                        message.set_result(None)
+        except Exception:
+            if not self._shutdown:
+                log.exception("error sending data")
+                self._shutdown_async()
+
     def _on_req_display_text(self, data):
         raise NotImplementedError()
 
@@ -305,33 +332,6 @@ class BBSMsgRouterTerminal(Terminal):
         except Exception:
             if not self._shutdown:
                 log.exception("error receiving data")
-                self._shutdown_async()
-
-    def _send_loop(self):
-        """ Thread responsible for output to the card reader.
-
-        The send thread reads messages from send queue and writes them to port.
-        Futures for messages expecting a response are pushed onto the response
-        queue in order that the requests were sent.
-        """
-        try:
-            while not self._shutdown:
-                message = self._send_queue.get()
-                if message is None:
-                    # shutdown will push None onto the send queue to stop send
-                    # loop from blocking on get forever
-                    return
-                log.debug("sending message: %r" % message)
-                if message.set_running_or_notify_cancel():
-                    write_frame(self._port, message.data)
-
-                    if message.expects_response:
-                        self._response_queue.put(message)
-                    else:
-                        message.set_result(None)
-        except Exception:
-            if not self._shutdown:
-                log.exception("error sending data")
                 self._shutdown_async()
 
     def shutdown(self):
