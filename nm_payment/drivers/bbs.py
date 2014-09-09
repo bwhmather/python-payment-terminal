@@ -53,10 +53,10 @@ class BBSSession(object):
         self._terminal._set_current_session(self)
 
     def on_req_display_text(self, data):
-        raise NotImplementedError()
+        pass
 
     def on_req_reset_timer(self, data):
-        raise NotImplementedError()
+        pass
 
     def on_req_local_mode(self, data):
         raise NotImplementedError()
