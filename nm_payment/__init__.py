@@ -26,4 +26,4 @@ def open_terminal(uri, *args, **kwargs):
     else:
         return driver(uri, *args, **kwargs)
 
-__all__ = [register_driver, open_terminal]
+__all__ = ['register_driver', 'open_terminal']
