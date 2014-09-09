@@ -47,9 +47,9 @@ class ResponseInterruptedError(Exception):
     pass
 
 
-class BBSSession(object):
+class _BBSSession(object):
     def __init__(self, terminal):
-        super(BBSSession, self).__init__()
+        super(_BBSSession, self).__init__()
         self._terminal = terminal
         self._terminal._set_current_session(self)
 
@@ -74,9 +74,9 @@ class BBSSession(object):
         pass
 
 
-class BBSPaymentSession(BBSSession, PaymentSession):
+class _BBSPaymentSession(_BBSSession, PaymentSession):
     def __init__(self, terminal, amount):
-        super(BBSPaymentSession, self).__init__(terminal)
+        super(_BBSPaymentSession, self).__init__(terminal)
 
         self._terminal.request("transfer_amount", amount).wait()
 
