@@ -68,3 +68,28 @@ class TestBBS(unittest.TestCase):
         self.assertFalse(message.prompt_customer)
         self.assertTrue(message.expects_input)
         self.assertEqual(message.text, "Expects input")
+
+    def test_pack_print_text(self):
+        self.assertEqual(
+            messages.pack_print_text([
+                ('write', "First"),
+                ('cut-partial'),
+                ('write', "Second"),
+                ('cut-through'),
+            ]),
+            b'\x42\x20\x22\x2aFirst\x0eSecond\x0c'
+        )
+
+    def test_unpack_print_text(self):
+        commands = list(messages.unpack_print_text(
+            b'\x42\x20\x22\x2aFirst\x0eSecond\x0c'
+        ))
+        self.assertEqual(
+            commands,
+            [
+                ('write', "First"),
+                ('cut-partial'),
+                ('write', "Second"),
+                ('cut-through'),
+            ]
+        )
