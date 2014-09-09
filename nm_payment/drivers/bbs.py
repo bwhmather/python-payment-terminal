@@ -55,9 +55,6 @@ class BBSSession(object):
     def on_req_display_text(self, data):
         raise NotImplementedError()
 
-    def on_req_print_text(self, data):
-        raise NotImplementedError()
-
     def on_req_reset_timer(self, data):
         raise NotImplementedError()
 
@@ -68,9 +65,6 @@ class BBSSession(object):
         raise NotImplementedError()
 
     def on_req_send_data(self, data):
-        raise NotImplementedError()
-
-    def on_req_device_attr(self, data):
         raise NotImplementedError()
 
     def unbind(self):
@@ -364,7 +358,6 @@ class BBSMsgRouterTerminal(Terminal):
         """ Shutdown without blocking.
         """
         Thread(target=self.shutdown).start()
-
 
 
 def open_tcp(uri, *args, **kwargs):
