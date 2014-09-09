@@ -10,6 +10,7 @@ log = logging.getLogger('nm_payment')
 
 from nm_payment.base import Terminal, PaymentSession
 from nm_payment.stream import Stream
+from . import messages
 
 
 def read_frame(port):
@@ -52,7 +53,9 @@ class BBSSession(object):
         self._terminal = terminal
         self._terminal._set_current_session(self)
 
-    def on_req_display_text(self, data):
+    def on_req_display_text(
+            self, data, *,
+            expects_input=False, prompt_customer=False):
         pass
 
     def on_req_reset_timer(self, data):
@@ -226,7 +229,12 @@ class BBSMsgRouterTerminal(Terminal):
                 self._shutdown_async()
 
     def _on_req_display_text(self, data):
-        raise NotImplementedError()
+        message = messages.unpack_display_text(data)
+        return self._current_session.on_req_display_text(
+            message.text,
+            prompt_customer=message.prompt_customer,
+            expects_input=message.expects_input
+        )
 
     def _on_req_print_text(self, data):
         raise NotImplementedError()
