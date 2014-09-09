@@ -369,7 +369,8 @@ class BBSMsgRouterTerminal(Terminal):
     def _shutdown_async(self):
         """ Shutdown without blocking.
         """
-        Thread(target=self.shutdown)
+        Thread(target=self.shutdown).start()
+
 
 
 def open_tcp(uri, *args, **kwargs):
