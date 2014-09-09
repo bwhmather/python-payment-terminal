@@ -153,7 +153,7 @@ class BBSMsgRouterTerminal(Terminal):
                 self._current_session.unbind()
             self._current_session = session
 
-    def request(self, message):
+    def _request(self, message):
         """ Send a request to the card reader
 
         :param message: bytestring to send to the ITU
@@ -163,6 +163,35 @@ class BBSMsgRouterTerminal(Terminal):
         request = _Request(message)
         self._send_queue.put(request)
         return request
+
+    def request_transfer_amount(self):
+        """ Start a payment Bank Mode session.
+
+        Maps directly to a single H51 request to the ITU
+
+        Should only be called by the current session.
+        """
+        raise NotImplementedError()
+
+    def request_abort(self):
+        """ Request that the ITU exit Bank Mode.  A successful response does
+        not indicate that a request was cancelled.  Session should wait for
+        the Local Mode request to determine the result.
+
+        Maps directly to a single H53 request to the ITU
+
+        Should only be called by the current session.
+        """
+        raise NotImplementedError()
+
+    def request_reversal(self):
+        """ Request that the ITU reverse the most recent payment.
+
+        Maps directly to a single H53 request to the ITU
+
+        Should only be called by the current session.
+        """
+        raise NotImplementedError()
 
     def _respond(self, message):
         """ Respond to a request from the card reader
