@@ -3,10 +3,10 @@ from collections import namedtuple
 
 
 _display_text_format = Struct(
-    '>H'  # CMSG
-    'H'  # DU.NO
-    'H'  # TYPE
-    'H'  # MODE
+    '>B'  # CMSG
+    'B'  # DU.NO
+    'B'  # TYPE
+    'B'  # MODE
 )
 _display_text_tuple = namedtuple(
     'display_text', 'prompt_customer, expects_input, text'
@@ -27,7 +27,7 @@ def pack_display_text(text, *, prompt_customer=False, expects_input=False):
 
 def unpack_display_text(data):
     header, prompt_customer, expects_input, mode = \
-        _display_text_format.unpack(data)
+        _display_text_format.unpack_from(data)
 
     if header != 0x41:
         raise ValueError()
@@ -46,7 +46,7 @@ def unpack_display_text(data):
         raise ValueError()
 
     # TODO Norwegian encoding
-    text = data[_display_text_format.calcsize():].decode('ascii')
+    text = data[_display_text_format.size:].decode('ascii')
 
     return _display_text_tuple(
         prompt_customer=prompt_customer,
