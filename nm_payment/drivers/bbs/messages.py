@@ -13,7 +13,7 @@ _display_text_tuple = namedtuple(
 )
 
 
-def pack_display_text(*, prompt_customer=False, expects_input=False, text=""):
+def pack_display_text(text, *, prompt_customer=False, expects_input=False):
     header = _display_text_format.pack(
         0x41,
         0x31 if prompt_customer else 0x30,
