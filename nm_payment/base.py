@@ -7,10 +7,10 @@ class Session(object):
 
 class PaymentSession(Session):
     def get_authorized():
-        pass
+        raise NotImplementedError()
 
     def get_completed():
-        pass
+        raise NotImplementedError()
 
     def commit(self):
         """
@@ -19,12 +19,12 @@ class PaymentSession(Session):
         :raises CompletedError: If commit has already been called
         :raises CancelledError: If the payment has been cancelled or reversed
         """
-        pass
+        raise NotImplementedError()
 
     def cancel(self):
         """
         """
-        pass
+        raise NotImplementedError()
 
 
 class Terminal(metaclass=ABCMeta):
