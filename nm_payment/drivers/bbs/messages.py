@@ -225,7 +225,7 @@ class KeyboardInputMessage(BBSMessage):
 
     def __init__(self, text, **kwargs):
         # allow `text` to be passed in as a positional argument
-        super(KeyboardInputMesage, self).__init__(text=text, **kwargs)
+        super(KeyboardInputMessage, self).__init__(text=text, **kwargs)
 
     @classmethod
     def unpack_fields(cls, data):
