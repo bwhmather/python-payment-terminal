@@ -42,7 +42,7 @@ class BBSMessageMeta(type):
         return OrderedDict()
 
 
-class BBSMessage(metaclass=BBSMessageMeta):
+class BBSMessageBase(object):
     def __init__(self, **kwargs):
         for name, field in self._fields.items():
             if name in kwargs:
@@ -87,6 +87,10 @@ class BBSMessage(metaclass=BBSMessageMeta):
         )
 
         return "<%s>" % " ".join(parts)
+
+
+class BBSMessage(BBSMessageBase, metaclass=BBSMessageMeta):
+    pass
 
 
 class DisplayTextMessage(BBSMessage):
