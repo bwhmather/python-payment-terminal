@@ -381,31 +381,16 @@ class AdministrationMessage(BBSMessage):
     fs = ConstantField(b'\x1C')
 
 
-def pack_device_attribute_request():
+class DeviceAttributeRequestMessage(BBSMessage):
     # TODO
-    raise NotImplementedError()
+    pass
 
 
-def unpack_device_attribute_request(data):
+class DeviceAttributeMessage(BBSMessage):
     # TODO
-    raise NotImplementedError()
+    pass
 
 
-def pack_device_attribute():
+class StatusMessage(BBSMessage):
     # TODO
-    raise NotImplementedError()
-
-
-def unpack_device_attribute(data):
-    # TODO
-    raise NotImplementedError()
-
-
-def pack_status():
-    # TODO
-    raise NotImplementedError()
-
-
-def unpack_status():
-    # TODO
-    raise NotImplementedError()
+    pass
