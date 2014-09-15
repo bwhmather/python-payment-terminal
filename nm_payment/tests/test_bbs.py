@@ -2,7 +2,7 @@ import io
 import unittest
 import threading
 
-from nm_payment.drivers.bbs import read_frame, BBSMsgRouterTerminal, messages
+from nm_payment.drivers.bbs import read_frame, BBSMsgRouterTerminal
 
 
 class TestBBS(unittest.TestCase):

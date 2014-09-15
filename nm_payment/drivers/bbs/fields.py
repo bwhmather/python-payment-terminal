@@ -1,12 +1,4 @@
-import re
-import math
 from decimal import Decimal
-from struct import Struct
-from collections import namedtuple
-from datetime import datetime
-
-import logging
-log = logging.getLogger('nm_payment')
 
 
 _UNDEFINED = object()
