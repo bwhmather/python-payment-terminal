@@ -1,9 +1,40 @@
 import unittest
 
+from nm_payment.drivers.bbs.fields import ConstantField
 import nm_payment.drivers.bbs.messages as m
 
 
 class TestBBSMessages(unittest.TestCase):
+    def test_message_meta(self):
+        class TestMessage(m.BBSMessage):
+            normal_field = "nothing interesting"
+            pitch_field = ConstantField(b'constant')
+
+        self.assertTrue(hasattr(TestMessage, '_fields'))
+
+        self.assertTrue(hasattr(TestMessage, 'pitch_field'))
+        self.assertTrue(hasattr(TestMessage, 'normal_field'))
+
+    def test_message_inheritance(self):
+        class BaseMessage(m.BBSMessage):
+            first = ConstantField(b'one')
+            second = ConstantField(b'two')
+            third = ConstantField(b'three')
+
+        class ChildMessage(BaseMessage):
+            second = ConstantField(b'overridden')
+            fourth = ConstantField(b'four')
+
+        self.assertEqual(
+            list(ChildMessage._fields.keys()),
+            ['first', 'second', 'third', 'fourth']
+        )
+
+        self.assertEqual(
+            [field.value for field in ChildMessage._fields.values()],
+            [b'one', b'overridden', b'three', b'four']
+        )
+
     def test_pack_display_text(self):
         self.assertEqual(
             b'\x41100Hello World',
