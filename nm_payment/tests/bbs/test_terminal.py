@@ -5,7 +5,7 @@ import threading
 from nm_payment.drivers.bbs import read_frame, BBSMsgRouterTerminal
 
 
-class TestBBS(unittest.TestCase):
+class TestBBSTerminal(unittest.TestCase):
     def test_read_frame(self):
         port = io.BytesIO(b'\x00\x0512345')
         self.assertEqual(read_frame(port), b'12345')
