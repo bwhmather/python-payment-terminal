@@ -6,7 +6,7 @@ import logging
 log = logging.getLogger('nm_payment')
 
 from .fields import (
-    BBSField,
+    BBSField, DelimitedField,
     ConstantField, EnumField,
     IntegerField, PriceField,
     TextField, FormattedTextField,
@@ -140,60 +140,72 @@ class LocalModeMessage(BBSMessage):
     type = ConstantField(b'\x44')
 
     result = EnumField({
+        # indicates transaction OK
         b'\x20': 'success',
+        # indicates transaction/operation rejected
         b'\x21': 'failure',
     })
 
     acc = EnumField({
-        # indicates standard update of accumulator.
+        # indicates standard update of accumulator
         b'\x20': 'standard',
-        # indicates transaction is finalised as Offline transaction.
+        # indicates transaction is finalised as Offline transaction
         b'\x22': 'offline',
-        # indicates no update of accumulator.
+        # indicates no update of accumulator
         b'\x30': 'none',
     })
 
+    # 2 digit issuer number is indicating the card issuer. Used if the
+    # transaction was accepted. As long as the data is available, the data
+    # shall be sent regardless if transaction is rejected or accepted.
     issuer_id = IntegerField(2)
 
-    def pack(self):
-        header = super(LocalModeMessage, self).pack()
+    # Variable field lenght, Max. 19 digit if present. The Primary Account
+    # Number from the card holder. The PAN shall not be sent if some parts of
+    # the card number is replaced with "*" in the printout. The PAN field is of
+    # restricted use, due to security regulations
+    pan = DelimitedField(TextField(19), optional=True, delimiter=b';')
 
-        # TODO
-        raise NotImplementedError()
+    # 14 byte numeric data. Timestamp in format YYYYMMDDHHMMSS. The timestamp
+    # shall be the same data as received from the Host to the terminal in the
+    # response message
+    timestamp = DelimitedField(DateTimeField(), delimiter=b';')
 
-    @classmethod
-    def unpack_fields(cls, data):
-        header_fields = super(LocalModeMessage, cls).unpack_fields()
+    # Cardholder Verification Method
+    ver_method = DelimitedField(EnumField({
+        # transaction is PIN based, also to be used if reversal transaction
+        b'\x30': 'pin based',
+        # transaction is signature based
+        b'\x31': 'signature based',
+        # no CVM. Only amount is verified by cardholder
+        b'\x32': 'not verified',
+        # transaction is a Loyalty Transaction. Used for data capture
+        # transactions. No accounts are debited or credited
+        b'\x32': 'loyalty transaction',
+    }), delimiter=b';')
 
-        # rest of data is sent as ';' separated strings.  No trailing ';'
-        pan, timestamp, ver_method, session_num, stan_auth, seq_no, tip = \
-            data[_local_mode_format.size:].split(';')
+    # 3 byte, numeric data. The current session number received from the HOST.
+    # The session number is uncertain in case that the transaction is an
+    # Offline transaction.  This number is changed on reconciliation.
+    session_num = DelimitedField(IntegerField(3), delimiter=b';')
 
-        pan
+    # 12 byte, Alphanumeric data (H20-H7F). The STAN_AUTH and the TIMESTAMP
+    # will identify the transaction.
+    #   * On-line: The STAN (System Trace Audit Number) is the 6 first bytes,
+    #     and the Authorisation Code is the 6 last bytes.
+    #   * Off-line: STAN=9xxxx9 where x is the message number for the actual
+    #     transaction AUTH = <H20H20H20H20H20H20>
+    stan_auth = DelimitedField(TextField(12), delimiter=b';')
 
-        timestamp = datetime.strptime(timestamp, '%Y%m%d%H%M%S')
+    # 4 bytes numeric data (H30 .. H39). This is the customer number if the
+    # transaction was Pre-Auth transaction. Must be used as reference in
+    # Transfer Amount - Adjustment transaction.
+    seq_no = DelimitedField(IntegerField(4), delimiter=b';')
 
-        ver_method = [
-            "pin based",
-            "signature based",
-            "not verified",
-            "loyalty transaction",
-        ][int(ver_method)]
-
-        session_num = int(session_num)
-
-        stan_auth
-
-        seq_no = int(seq_no)
-
-        tip
-
-        return dict(
-            pan=pan, timestamp=timestamp, ver_method=ver_method,
-            session_num=session_num, stan_aut=stan_auth, seq_no=seq_no,
-            tip=tip,
-            **header_fields
-        )
+    # 11 bytes numeric data (H30 .. H39). Normally not used. Only used in
+    # Restaurant or Hotel environmet where TIP is added to the purchase amount
+    # on the ITU. Used in the Purchase or Adjustment transaction.
+    tip = DelimitedField(PriceField(), optional=True, delimiter=b';')
 
 
 class KeyboardInputRequestMessage(BBSMessage):
