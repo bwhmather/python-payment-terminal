@@ -44,7 +44,7 @@ class BBSField(object):
 
 
 class DelimitedField(BBSField):
-    def __init__(self, inner, *, delimiter, optional=False):
+    def __init__(self, inner, *, delimiter, optional=False, **kwargs):
         if len(delimiter) != 1:
             raise ValueError("only single character delimiters are supported")
 
@@ -52,7 +52,7 @@ class DelimitedField(BBSField):
         if size is not None:
             size += 1
 
-        super(DelimitedField, self).__init__(size=size)
+        super(DelimitedField, self).__init__(size=size, **kwargs)
 
         self._inner = inner
         self._delimiter = delimiter
