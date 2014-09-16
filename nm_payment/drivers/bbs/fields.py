@@ -59,6 +59,8 @@ class TextField(BBSField):
     def read(self, port):
         if self.size is not None:
             data = port.read(self.size)
+            if len(data) != self.size:
+                raise ValueError("read data does not match expected size")
         else:
             data = port.read()
 
