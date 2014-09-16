@@ -174,10 +174,6 @@ class LocalModeMessage(BBSMessage):
         pan, timestamp, ver_method, session_num, stan_auth, seq_no, tip = \
             data[_local_mode_format.size:].split(';')
 
-        acc
-
-        id_
-
         pan
 
         timestamp = datetime.strptime(timestamp, '%Y%m%d%H%M%S')
@@ -199,7 +195,8 @@ class LocalModeMessage(BBSMessage):
 
         return dict(
             pan=pan, timestamp=timestamp, ver_method=ver_method,
-            session_num=session_num, stan_aut=stan_aut, seq_no=seq_no, tip=tip,
+            session_num=session_num, stan_aut=stan_auth, seq_no=seq_no,
+            tip=tip,
             **header_fields
         )
 
