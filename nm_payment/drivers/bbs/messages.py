@@ -1,6 +1,5 @@
 import io
 from collections import OrderedDict
-from datetime import datetime
 
 import logging
 log = logging.getLogger('nm_payment')
