@@ -1,3 +1,4 @@
+import io
 from collections import OrderedDict
 from datetime import datetime
 
@@ -54,24 +55,18 @@ class BBSMessageBase(object):
             setattr(self, name, value)
 
     def pack(self):
-        data = bytearray()
+        buf = io.BytesIO()
         for name, field in self._fields.items():
-            data += field.pack(getattr(self, name))
-        return bytes(data)
+            field.write(getattr(self, name), buf)
+        return buf.getvalue()
 
     @classmethod
     def unpack_fields(cls, data):
         fields = OrderedDict()
 
-        offset = 0
+        buf = io.BytesIO(data)
         for name, field in cls._fields.items():
-            # TODO multiple variable length fields
-            if field.size is not None:
-                fields[name] = field.unpack(data[offset:offset+field.size])
-                offset += field.size
-            else:
-                fields[name] = field.unpack(data[offset:])
-                offset = len(data)
+            fields[name] = field.read(buf)
 
         return fields
 
@@ -232,20 +227,16 @@ class KeyboardInputMessage(BBSMessage):
     def unpack_fields(cls, data):
         # currently special cased because of fixed size `delimiter` field
         # following variable length `text` field.
-        # TODO generalize.
+        # TODO yuck yuck yuck
         fields = OrderedDict()
 
-        fields['header'] = cls.type.unpack(
-            data[:cls.type.size]
-        )
+        fields['header'] = cls.type.read(data)
 
-        fields['text'] = cls.text.unpack(
-            data[cls.type.size:-cls.delimiter.size]
-        )
+        text_data = data[cls.type.size:-cls.delimiter.size]
+        fields['text'] = cls.text.read(io.BytesIO(text_data))
 
-        fields['delimiter'] = cls.delimiter.unpack(
-            data[:-cls.delimiter.size]
-        )
+        delimiter_data = data[:-cls.delimiter.size]
+        fields['delimiter'] = cls.delimiter.read(io.BytesIO(delimiter_data))
 
 
 class SendDataMessageBase(BBSMessage):
