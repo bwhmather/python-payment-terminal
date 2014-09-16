@@ -43,6 +43,37 @@ class BBSField(object):
         return self._unpack(data)
 
 
+class DelimitedField(BBSField):
+    def __init__(self, inner, *, delimiter, optional=False):
+        if len(delimiter) != 1:
+            raise ValueError("only single character delimiters are supported")
+
+        size = inner.size
+        if size is not None:
+            size += 1
+
+        super(DelimitedField, self).__init__(size=size)
+
+        self._inner = inner
+        self._delimiter = delimiter
+        self._optional = optional
+
+    def write(self, value, port):
+        if not (value is None and self._optional):
+            self._inner.write(value, port)
+        port.write(self._delimiter)
+
+    def read(self, port):
+        buf = io.BytesIO()
+
+        char = port.read(1)
+        while char != self._delimiter:
+            buf.write(char)
+            char = port.read(1)
+
+        return self._inner.read(buf)
+
+
 class TextField(BBSField):
     def write(self, value, port):
         data = value.encode('ascii')
