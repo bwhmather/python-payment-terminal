@@ -130,11 +130,6 @@ class BBSMsgRouterTerminal(Terminal):
             0x60: self._on_req_device_attr,
         }
 
-        self._RESPONSE_CODES = {
-            0x5b: self._parse_ack,
-            0x62: self._parse_device_attr_ack,
-        }
-
         self._port = port
 
         self._shutdown = False
@@ -296,42 +291,14 @@ class BBSMsgRouterTerminal(Terminal):
             raise
         self._respond(response)
 
-    def _parse_ack(self, data):
-        response_code = struct.unpack('>I', data[1:3])
-        if response_code == 0x3030:
-            return None
-        else:
-            raise TerminalError(response_code)
-
-    def _parse_device_attr_ack(self, data):
-        # TODO
-        return None
-
-    def _is_response(self, frame):
-        header = parse_response_code(frame)
-        return header in self._RESPONSE_CODES
-
-    def _handle_response(self, frame):
-        header = parse_response_code(frame)
+    def _handle_response(self, message):
         try:
             request = self._response_queue.get_nowait()
         except queue.Empty:
             log.error("response has no corresponding request")
             raise
 
-        try:
-            # decode the response
-            response = self._RESPONSE_CODES[header](frame)
-        except TerminalError as e:
-            # error from ITU.  No need to exit
-            request.set_exception(e)
-        except Exception as e:
-            # other exception.  Need to close the request before
-            # breaking from the loop
-            request.set_exception(e)
-            raise
-        else:
-            request.set_result(response)
+        request.set_result(message)
 
     def _ack_ok(self):
         # TODO
