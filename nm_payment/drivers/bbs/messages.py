@@ -250,6 +250,7 @@ class KeyboardInputMessage(BBSMessage):
 
 class SendDataMessageBase(BBSMessage):
     type = ConstantField(b'\x46')
+
     code = TextField(2)
     is_last_block = EnumField({
         b'\x32': True,
@@ -296,6 +297,7 @@ class SendDataMessage(SendDataMessageBase):
 
 class TransferAmountMessage(BBSMessage):
     type = ConstantField(b'\x51')
+
     timestamp = DateTimeField()  # not used
     id_no = TextField(6)  # not used
     seq_no = TextField(4)  # TODO
@@ -334,6 +336,7 @@ class TransferAmountMessage(BBSMessage):
 
 class TransferCardDataMessage(BBSMessage):
     type = ConstantField(b'\x52')
+
     block = EnumField({b'\x30': None})
     track = EnumField({
         b'\x32': 'Track 2',
@@ -346,6 +349,7 @@ class TransferCardDataMessage(BBSMessage):
 
 class AdministrationMessage(BBSMessage):
     type = ConstantField(b'\x53')
+
     timestamp = DateTimeField()
     id_no = TextField(6)
     seq_no = TextField(4)
