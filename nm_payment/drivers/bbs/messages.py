@@ -399,6 +399,36 @@ class StatusMessage(BBSMessage):
     is_response = True
 
 
+class ResponseMessage(BBSMessage):
+    type = ConstantField(b'\x5b')
+    is_response = True
+
+    code = EnumField({
+        # OK. The Receiver has received and processed the data correctly
+        b'\x30\x30': 'success',
+        # Not OK. The receiver is not able to process the received data
+        b'\x30\x33': 'error',
+        # Not OK. Shall be treated as if H3033 is received
+        b'\x30\x34': 'error',
+        b'\x30\x35': 'error',
+        b'\x30\x36': 'error',
+        b'\x30\x37': 'error',
+        b'\x30\x38': 'error',
+        b'\x30\x39': 'error',
+        # ECR display busy, ITU may try again once
+        b'\x31\x31': 'display busy',
+        # ECR printer busy, ITU may try again once
+        b'\x31\x32': 'printer busy',
+        # ECR printer out of function.
+        # If the ECR sends H3133, the ITU must interrupt the current
+        # transaction, and wait for the next 'Bank-Mode' initiation from the
+        # ECR
+        b'\x31\x33': 'printer broken'
+    })
+
+    endcode = ConstantField(b'\x5d')
+
+
 _ITU_MESSAGE_TYPES = {
     DisplayTextMessage,
     PrintTextMessage,
