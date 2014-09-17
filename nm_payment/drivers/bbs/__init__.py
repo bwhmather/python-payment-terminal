@@ -25,10 +25,6 @@ def read_frame(port):
     return frame
 
 
-def parse_response_code(message):
-    return struct.unpack('B', message[:1])
-
-
 def write_frame(port, data):
     port.write(struct.pack('>H', len(data)))
     port.write(data)
@@ -121,13 +117,14 @@ class BBSMsgRouterTerminal(Terminal):
         super(BBSMsgRouterTerminal, self).__init__()
 
         self._REQUEST_CODES = {
-            0x41: self._on_req_display_text,
-            0x42: self._on_req_print_text,
-            0x43: self._on_req_reset_timer,
-            0x44: self._on_req_local_mode,
-            0x46: self._on_req_keyboard_input,
-            0x49: self._on_req_send_data,
-            0x60: self._on_req_device_attr,
+            messages.DisplayTextMessage: self._on_req_display_text,
+            messages.PrintTextMessage: self._on_req_print_text,
+            messages.ResetTimerMessage: self._on_req_reset_timer,
+            messages.LocalModeMessage: self._on_req_local_mode,
+            messages.KeyboardInputRequestMessage: self._on_req_keyboard_input,
+            messages.SendDataMessage: self._on_req_send_data,
+            messages.DeviceAttributeRequestMessage: self._on_req_device_attr,
+            messages.StatusMessage: self._on_req_status,
         }
 
         self._port = port
@@ -238,44 +235,49 @@ class BBSMsgRouterTerminal(Terminal):
                 log.exception("error sending data")
                 self._shutdown_async()
 
-    def _on_req_display_text(self, data):
-        message = messages.unpack_display_text(data)
+    def _on_req_display_text(self, message):
         return self._current_session.on_req_display_text(
             message.text,
             prompt_customer=message.prompt_customer,
             expects_input=message.expects_input
         )
 
-    def _on_req_print_text(self, data):
+    def _on_req_print_text(self, message):
         # TODO
         raise NotImplementedError()
 
-    def _on_req_reset_timer(self, data):
+    def _on_req_reset_timer(self, message):
         # TODO
         raise NotImplementedError()
 
-    def _on_req_local_mode(self, data):
+    def _on_req_local_mode(self, message):
         # TODO
         raise NotImplementedError()
 
-    def _on_req_keyboard_input(self, data):
+    def _on_req_keyboard_input(self, message):
         # TODO
         raise NotImplementedError()
 
-    def _on_req_send_data(self, data):
+    def _on_req_send_data(self, message):
         # TODO
         raise NotImplementedError()
 
-    def _on_req_device_attr(self, data):
+    def _on_req_device_attr(self, message):
         # TODO
         raise NotImplementedError()
 
-    def _handle_request(self, frame):
-        header = parse_response_code(frame)
+    def _on_req_status(self, message):
+        # TODO
+        raise NotImplementedError()
+
+    def _handle_request(self, message):
+        # TODO XXX hacky XXX
+        handler = self._REQUEST_CODES[message.__class__]
+
         try:
-            response = self._REQUEST_CODES[header](frame)
+            response = handler(message)
             if response is None:
-                response = self._ack_ok()
+                response = messages.ResponseMessage()
 
         except TerminalError as e:
             # exception is intended for the ITU and shouldn't cause
@@ -285,10 +287,12 @@ class BBSMsgRouterTerminal(Terminal):
                 exc_info=True
             )
             response = self._ack_exception(e)
+
         except Exception:
             # log and break
             log.exception("critical error while handling message")
             raise
+
         self._respond(response)
 
     def _handle_response(self, message):
