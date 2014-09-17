@@ -351,10 +351,12 @@ class BBSMsgRouterTerminal(Terminal):
             while not self._shutdown:
                 frame = read_frame(self._port)
                 log.debug("message recieved: %r" % frame)
-                if self._is_response(frame):
-                    self._handle_response(frame)
+                message = messages.unpack_itu_message(frame)
+
+                if message.is_response:
+                    self._handle_response(message)
                 else:
-                    self._handle_request(frame)
+                    self._handle_request(message)
         except Exception:
             if not self._shutdown:
                 log.exception("error receiving data")
