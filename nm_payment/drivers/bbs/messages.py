@@ -382,15 +382,58 @@ class AdministrationMessage(BBSMessage):
 
 
 class DeviceAttributeRequestMessage(BBSMessage):
-    # TODO
-    pass
+    type = ConstantField(b'\x60')
 
 
 class DeviceAttributeMessage(BBSMessage):
-    # TODO
-    pass
+    type = ConstantField(b'\x61')
 
 
 class StatusMessage(BBSMessage):
-    # TODO
-    pass
+    type = ConstantField(b'\x62')
+    is_response = True
+
+
+_ITU_MESSAGE_TYPES = {
+    DisplayTextMessage,
+    PrintTextMessage,
+    ResetTimerMessage,
+    LocalModeMessage,
+    KeyboardInputRequestMessage,
+    SendDataMessage,
+    DeviceAttributeRequestMessage,
+    StatusMessage,
+}
+
+
+class ITUMessage(BBSMessage):
+    type = EnumField({
+        subtype.type.value: subtype
+        for subtype in _ITU_MESSAGE_TYPES
+    })
+
+
+def unpack_itu_message(data):
+    header = ITUMessage.unpack(data)
+    return header.type.unpack(data)
+
+
+_ECR_MESSAGE_TYPES = {
+    KeyboardInputMessage,
+    SendDataMessage,
+    TransferAmountMessage,
+    AdministrationMessage,
+    DeviceAttributeMessage,
+}
+
+
+class ECRMessage(BBSMessage):
+    type = EnumField({
+        subtype.type.value: subtype
+        for subtype in _ECR_MESSAGE_TYPES
+    })
+
+
+def unpack_ecr_message(data):
+    header = ECRMessage.unpack(data)
+    return header.type.unpack(data)
