@@ -15,16 +15,13 @@ from .fields import (
 
 class BBSMessageMeta(type):
     def __new__(mcls, cls, bases, d):
-        # find BBSField attributes and add them to a list of fields making up
-        # a message
-        # inherit from parent classes by updating fields dictionary
-        # TODO this is a bit of a hack.  Would be much better to use super or
-        # something but the obvious ways risk loosing the order.  With more
-        # time this is something I would like to think through properly
         fields = OrderedDict()
+
+        # inherit fields from first base class with `_fields` attribute
         for base in bases:
             if hasattr(base, '_fields'):
                 fields.update(base._fields)
+                break
 
         # read fields from class body
         for name, field in d.items():
