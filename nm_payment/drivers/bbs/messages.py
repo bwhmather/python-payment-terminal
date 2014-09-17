@@ -81,7 +81,7 @@ class BBSMessageBase(object):
 
 
 class BBSMessage(BBSMessageBase, metaclass=BBSMessageMeta):
-    pass
+    is_response = False
 
 
 class DisplayTextMessage(BBSMessage):
@@ -218,6 +218,7 @@ class KeyboardInputRequestMessage(BBSMessage):
 
 class KeyboardInputMessage(BBSMessage):
     type = ConstantField(b'\x55')
+    is_response = True
 
     text = TextField()
 
