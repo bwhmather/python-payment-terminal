@@ -1,4 +1,3 @@
-import io
 import unittest
 
 import nm_payment.drivers.bbs.fields as f
@@ -9,28 +8,19 @@ class TestBBSFields(unittest.TestCase):
         self.assertEqual(f.TextField().size, None)
         self.assertEqual(f.TextField(4).size, 4)
 
-    def test_write_text(self):
-        buf = io.BytesIO()
-        f.TextField().write("hello", buf)
-        self.assertEqual(buf.getvalue(), b'hello')
+    def test_pack_text(self):
+        self.assertEqual(f.TextField().pack("hello"), b'hello')
 
-        buf = io.BytesIO()
-        f.TextField(10).write("padded", buf)
-        self.assertEqual(buf.getvalue(), b'padded    ')
+        self.assertEqual(f.TextField(10).pack("padded"), b'padded    ')
 
-        buf = io.BytesIO()
         self.assertRaises(
             ValueError,
-            f.TextField(4).write, "loooonnnngggg", buf
+            f.TextField(4).pack, "loooonnnngggg"
         )
 
-    def test_read_text(self):
-        buf = io.BytesIO(b'hello')
-        self.assertEqual(f.TextField().read(buf), "hello")
+    def test_unpack_text(self):
+        self.assertEqual(f.TextField().unpack(b'hello'), ("hello", 5))
 
-        buf = io.BytesIO(b'loooonnnngggg')
-        self.assertEqual(f.TextField(5).read(buf), "loooo")
-        self.assertEqual(buf.read(), b"nnnngggg")
+        self.assertEqual(f.TextField(5).unpack(b'loooonnnngggg'), ("loooo", 5))
 
-        buf = io.BytesIO(b'short')
-        self.assertRaises(ValueError, f.TextField(120).read, buf)
+        self.assertRaises(ValueError, f.TextField(120).unpack, b'short')

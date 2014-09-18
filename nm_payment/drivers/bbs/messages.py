@@ -1,4 +1,3 @@
-import io
 from collections import OrderedDict
 
 import logging
@@ -51,18 +50,19 @@ class BBSMessageBase(object):
             setattr(self, name, value)
 
     def pack(self):
-        buf = io.BytesIO()
-        for name, field in self._fields.items():
-            field.write(getattr(self, name), buf)
-        return buf.getvalue()
+        return b''.join(
+            field.pack(getattr(self, name))
+            for name, field in self._fields.items()
+        )
 
     @classmethod
     def unpack_fields(cls, data):
         fields = OrderedDict()
 
-        buf = io.BytesIO(data)
+        offset = 0
         for name, field in cls._fields.items():
-            fields[name] = field.read(buf)
+            fields[name], size = field.unpack(data[offset:])
+            offset += size
 
         return fields
 
@@ -239,13 +239,13 @@ class KeyboardInputMessage(BBSMessage):
         # TODO yuck yuck yuck
         fields = OrderedDict()
 
-        fields['header'] = cls.type.read(data)
+        fields['header'], size = cls.type.read(data)
 
-        text_data = data[cls.type.size:-cls.delimiter.size]
-        fields['text'] = cls.text.read(io.BytesIO(text_data))
+        text_data = data[size:-cls.delimiter.size]
+        fields['text'], size = cls.text.unpack(text_data)
 
-        delimiter_data = data[:-cls.delimiter.size]
-        fields['delimiter'] = cls.delimiter.read(io.BytesIO(delimiter_data))
+        delimiter_data = data[-cls.delimiter.size:]
+        fields['delimiter'], size = cls.delimiter.unpack(delimiter_data)
 
 
 class SendDataMessageBase(BBSMessage):

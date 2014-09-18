@@ -1,4 +1,3 @@
-import io
 from decimal import Decimal
 
 
@@ -11,36 +10,19 @@ class BBSField(object):
         if default is not _UNDEFINED:
             self.default = default
 
-    def _pack(self, value):
+    def pack(self, value):
         """ Takes the value of a field and returns its binary representation
 
         Should raise ValueError on invalid data
         """
-        buf = io.BytesIO()
-        self.write(value, buf)
-        # TODO don't copy
-        return buf.getvalue()
+        raise NotImplementedError()
 
-    def _unpack(self, data):
+    def unpack(self, data):
         """ Reads the value of a field from a bytes object
 
         Should raise ValueError if parsing fails
         """
-        if self.size is None:
-            raise RuntimeError("can't unpack field of unknown size")
-        buf = io.BytesIO(data)
-        return self.read(buf)
-
-    def write(self, value, port):
-        port.write(self._pack(value))
-
-    def read(self, port):
-        if self.size is not None:
-            data = port.read(self.size)
-        else:
-            data = port.read()
-
-        return self._unpack(data)
+        raise NotImplementedError()
 
 
 class DelimitedField(BBSField):
@@ -58,24 +40,28 @@ class DelimitedField(BBSField):
         self._delimiter = delimiter
         self._optional = optional
 
-    def write(self, value, port):
-        if not (value is None and self._optional):
-            self._inner.write(value, port)
-        port.write(self._delimiter)
+    def pack(self, value):
+        if value is None and self._optional:
+            inner = b''
+        else:
+            inner = self._inner.pack(value)
+        return inner + self._delimiter
 
-    def read(self, port):
-        buf = io.BytesIO()
+    def unpack(self, data):
+        end = data.find(self.delimiter)
+        if end == -1:
+            raise ValueError("could not find delimiter")
 
-        char = port.read(1)
-        while char != self._delimiter:
-            buf.write(char)
-            char = port.read(1)
+        value, size = self._inner.unpack(data[:end])
 
-        return self._inner.read(buf)
+        if size != end:
+            raise ValueError("inner field did not consume delimited data")
+
+        return value, size + len(self._delimiter)
 
 
 class TextField(BBSField):
-    def write(self, value, port):
+    def pack(self, value):
         data = value.encode('ascii')
 
         if self.size is not None:
@@ -85,22 +71,20 @@ class TextField(BBSField):
             if len(data) != self.size:
                 raise ValueError("string too long")
 
-        port.write(data)
+        return data
 
-    def read(self, port):
+    def unpack(self, data):
         if self.size is not None:
-            data = port.read(self.size)
+            data = data[:self.size]
             if len(data) != self.size:
                 raise ValueError("read data does not match expected size")
-        else:
-            data = port.read()
 
-        return data.decode('ascii')
+        return data.decode('ascii'), len(data)
 
 
 class FormattedTextField(BBSField):
     # TODO inherit from TextField
-    def _pack(self, commands):
+    def pack(self, commands):
         text = bytearray()
 
         def op_write(text):
@@ -126,7 +110,7 @@ class FormattedTextField(BBSField):
 
         return bytes(text)
 
-    def _unpack(self, data):
+    def unpack(self, data):
         text = data.decode('ascii')
 
         commands = []
@@ -146,32 +130,35 @@ class FormattedTextField(BBSField):
 
             commands.append('cut-through')
 
-            return commands
+            return commands, len(data)
 
 
 class IntegerField(BBSField):
     def __init__(self, size, **kwargs):
         super(IntegerField, self).__init__(size=size, **kwargs)
 
-    def _pack(self, integer):
+    def pack(self, integer):
         string = ('{:0' + str(self.size) + 'd}').format(integer)
         if len(string) != self.size:
             raise ValueError()
 
         return string.encode('ascii')
 
-    def _unpack(self, data):
-        if len(data) != self.size:
-            raise ValueError("data does not match expected length")
+    def unpack(self, data):
+        subdata = data[:self.size]
+        if len(subdata) != self.size:
+            raise ValueError("not enough data")
 
-        return int(data.decode('ascii'))
+        string = subdata.decode('ascii')
+
+        return int(string), self.size
 
 
 class PriceField(BBSField):
     def __init__(self, size=11, **kwargs):
         super(PriceField, self).__init__(size=size, **kwargs)
 
-    def _pack(self, decimal):
+    def pack(self, decimal):
         string = str(decimal)
 
         if self.size is not None:
@@ -182,16 +169,17 @@ class PriceField(BBSField):
 
         return string.encode('ascii')
 
-    def _unpack(self, data):
-        string = data.decode('ascii')
+    def unpack(self, data):
+        subdata = data[:self.size]
+        if len(subdata) != self.size:
+            raise ValueError("not enough data")
 
-        if len(string) != self.size:
-            raise ValueError("price data is wrong length")
+        string = subdata.decode('ascii')
 
         if not string.isnumeric():
-            raise ValueError("price data is not a number")
+            raise ValueError("price data is not a positive integer")
 
-        return Decimal(string) / 10000
+        return Decimal(string) / 10000, self.size
 
 
 class EnumField(BBSField):
@@ -212,11 +200,15 @@ class EnumField(BBSField):
         self._from_enum = values
         self._to_enum = {value: key for key, value in values.items()}
 
-    def _pack(self, value):
+    def pack(self, value):
         return self._to_enum[value]
 
-    def _unpack(self, data):
-        return self._from_enum[data]
+    def unpack(self, data):
+        subdata = data[:self.size]
+        if len(subdata) != self.size:
+            raise ValueError("not enough data")
+
+        return self._from_enum[subdata], self.size
 
 
 class ConstantField(BBSField):
@@ -229,13 +221,18 @@ class ConstantField(BBSField):
         super(ConstantField, self).__init__(len(value))
         self.value = value
 
-    def _pack(self, ignored):
+    def pack(self, ignored):
         return self.value
 
-    def _unpack(self, data):
-        if data != self.value:
+    def unpack(self, data):
+        subdata = data[:self.size]
+        if len(subdata) != self.size:
+            raise ValueError("not enough data")
+
+        if subdata != self.value:
             raise ValueError("expected %r, got %r" % (self.value, data))
-        return None
+
+        return None, self.size
 
 
 class DateTimeField(BBSField):
