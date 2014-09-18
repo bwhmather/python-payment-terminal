@@ -13,14 +13,28 @@ class BBSField(object):
     def pack(self, value):
         """ Takes the value of a field and returns its binary representation
 
-        Should raise ValueError on invalid data
+        :param value:
+            A value of the type represented by the field
+
+        :returns:
+            A byte string representing the serialized value
+
+        :raises ValueError:
+            If ``value`` is invalid
         """
         raise NotImplementedError()
 
     def unpack(self, data):
         """ Reads the value of a field from a bytes object
 
-        Should raise ValueError if parsing fails
+        :param data:
+            A bytes object from which to unpack the field
+
+        :returns:
+            A tuple of the parsed value and the number of bytes consumed
+
+        :raises ValueError:
+            If data does not match expected format
         """
         raise NotImplementedError()
 
