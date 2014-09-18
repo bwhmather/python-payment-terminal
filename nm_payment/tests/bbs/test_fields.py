@@ -61,3 +61,27 @@ class TestBBSFields(unittest.TestCase):
         self.assertEqual(f.TextField(5).unpack(b'loooonnnngggg'), ("loooo", 5))
 
         self.assertRaises(ValueError, f.TextField(120).unpack, b'short')
+
+    def test_formatted_text_field(self):
+        # TODO
+        pass
+
+    def test_integer_field(self):
+        # TODO
+        pass
+
+    def test_price_field(self):
+        # TODO
+        pass
+
+    def test_enum_field(self):
+        # TODO
+        pass
+
+    def test_constant_field(self):
+        # TODO
+        pass
+
+    def test_datetime_field(self):
+        # TODO
+        pass
