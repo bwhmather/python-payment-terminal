@@ -82,6 +82,9 @@ class _BBSPaymentSession(_BBSSession, PaymentSession):
         self._terminal.request("transfer_amount", amount).wait()
 
     def on_req_local_mode(self, data):
+        """
+        .. note:: Internal use only
+        """
         # TODO
         pass
 
@@ -170,7 +173,7 @@ class BBSMsgRouterTerminal(Terminal):
 
         Maps directly to a single H51 request to the ITU
 
-        Should only be called by the current session.
+        .. note:: Should only be called by the current session.
         """
         # TODO
         raise NotImplementedError()
@@ -182,7 +185,7 @@ class BBSMsgRouterTerminal(Terminal):
 
         Maps directly to a single H53 request to the ITU
 
-        Should only be called by the current session.
+        .. note:: Should only be called by the current session.
         """
         # TODO
         raise NotImplementedError()
@@ -192,21 +195,31 @@ class BBSMsgRouterTerminal(Terminal):
 
         Maps directly to a single H53 request to the ITU
 
-        Should only be called by the current session.
+        .. note:: Should only be called by the current session.
         """
         # TODO
         raise NotImplementedError()
 
-    def _respond(self, message):
+    def _respond(self, message, *, async=False):
         """ Respond to a request from the card reader
 
-        :param message: bytestring to send to the ITU
-
-        :return: a future that will yield None once the response has been sent
+        :param bytes message: bytestring to send to the ITU
+        :param bool async:
+            If ``True``, :py:meth:`_respond` will block until the response has
+            been sent.
+            If ``False`` it will return a future that will yield ``None`` on
+            completion
+        :return:
+            If ``async`` is ``False``, a :py:class:`concurrent.futures.Future`
+            that will yield ``None`` once the response has been sent.
+            Otherwise nothing.
         """
         response = _Response(message)
         self._send_queue.put(response)
-        return response
+        if async:
+            return response
+        else:
+            response.result()
 
     def _send_loop(self):
         """ Thread responsible for output to the card reader.
