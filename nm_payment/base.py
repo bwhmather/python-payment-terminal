@@ -3,10 +3,22 @@ class Session(object):
 
 
 class PaymentSession(Session):
-    def get_authorized():
+    def is_authorized(self):
         raise NotImplementedError()
 
-    def get_completed():
+    def wait_authorized(self):
+        raise NotImplementedError()
+
+    def add_authorized_callback(self, callback):
+        raise NotImplementedError()
+
+    def is_completed(self):
+        raise NotImplementedError()
+
+    def wait_completed(self):
+        raise NotImplementedError()
+
+    def add_completed_callback(self):
         raise NotImplementedError()
 
     def commit(self):
@@ -20,6 +32,7 @@ class PaymentSession(Session):
 
     def cancel(self):
         """
+        :raises CompletedError: If commit has already been called
         """
         raise NotImplementedError()
 
