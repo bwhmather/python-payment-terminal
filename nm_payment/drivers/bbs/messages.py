@@ -109,7 +109,7 @@ class DisplayTextMessage(BBSMessage):
 class PrintTextMessage(BBSMessage):
     type = ConstantField(b'\x42')
 
-    sub_type = EnumField({b'\x20': 'Formatted'})
+    sub_type = EnumField({b'\x20': 'formatted'})
 
     media = EnumField({
         b'\x20': 'print_on_receipt',
@@ -170,14 +170,14 @@ class LocalModeMessage(BBSMessage):
     # Cardholder Verification Method
     ver_method = DelimitedField(EnumField({
         # transaction is PIN based, also to be used if reversal transaction
-        b'\x30': 'pin based',
+        b'\x30': 'pin_based',
         # transaction is signature based
-        b'\x31': 'signature based',
+        b'\x31': 'signature_based',
         # no CVM. Only amount is verified by cardholder
-        b'\x32': 'not verified',
+        b'\x32': 'not_verified',
         # transaction is a Loyalty Transaction. Used for data capture
         # transactions. No accounts are debited or credited
-        b'\x32': 'loyalty transaction',
+        b'\x32': 'loyalty_transaction',
     }), delimiter=b';')
 
     # 3 byte, numeric data. The current session number received from the HOST.
@@ -224,8 +224,8 @@ class KeyboardInputMessage(BBSMessage):
 
     # XXX how are you supposed to parse this
     delimiter = EnumField({
-        b'0': 'Enter',
-        b'9': 'Escape',
+        b'0': 'enter',
+        b'9': 'escape',
     })
 
     def __init__(self, text, **kwargs):
@@ -306,20 +306,20 @@ class TransferAmountMessage(BBSMessage):
         b'\x30': None,
     })
     transfer_type = EnumField({
-        b'\x30': 'EFT Authorisation',
-        b'\x31': 'Return of Goods',
-        b'\x32': 'Reversal',
-        b'\x33': 'Purchase with Cashback',
-        b'\x34': 'PRE Authorisation',
-        b'\x35': 'Adjustment',
-        b'\x36': 'Balance Inquiry',
-        b'\x37': 'Complete Receipt',
-        b'\x38': 'Deposit',
-        b'\x39': 'Cash Withdrawal',
-        b'\x3a': 'Load e-purse card',
-        b'\x3b': 'Merchandise Purchase',
-        b'\x3c': 'Merchandise Reversal',
-        b'\x3d': 'Merchandise Correction',
+        b'\x30': 'eft_authorisation',
+        b'\x31': 'return_of_goods',
+        b'\x32': 'reversal',
+        b'\x33': 'purchase_with_cashback',
+        b'\x34': 'pre_authorisation',
+        b'\x35': 'adjustment',
+        b'\x36': 'balance_inquiry',
+        b'\x37': 'complete_receipt',
+        b'\x38': 'deposit',
+        b'\x39': 'cash_withdrawal',
+        b'\x3a': 'load_epurse_card',
+        b'\x3b': 'merchandise_purchase',
+        b'\x3c': 'merchandise_reversal',
+        b'\x3d': 'merchandise_correction',
     })
 
     amount = PriceField(11)
@@ -339,9 +339,9 @@ class TransferCardDataMessage(BBSMessage):
 
     block = EnumField({b'\x30': None})
     track = EnumField({
-        b'\x32': 'Track 2',
-        b'\x33': 'Track 1',
-        b'\x40': 'Manual',
+        b'\x32': 'track_2',
+        b'\x33': 'track_1',
+        b'\x40': 'manual',
     })
 
     # TODO DATA and FS
@@ -357,30 +357,30 @@ class AdministrationMessage(BBSMessage):
 
     # TODO single character keyboard input
     adm_code = EnumField({
-        b'\x30\x30': 'not used',
-        b'\x30\x39': 'not used',
+        b'\x30\x30': 'not_used',
+        b'\x30\x39': 'not_used',
         # SEND from ECR should be mapped by ITU to perform RECONCILIATION
         # function.
-        b'\x31\x30': 'SEND',
+        b'\x31\x30': 'send',
         # KLAR, validation key. Refer to the NOTE for details
-        b'\x31\x31': 'KLAR',
+        b'\x31\x31': 'ready',
         # AVBRYT, cancellation key. Refer to the NOTE for details.
-        b'\x31\x32': 'AVBRYT',
+        b'\x31\x32': 'cancel',
         # FEIL, correction key.
-        b'\x31\x33': 'FEIL',
+        b'\x31\x33': 'error',
         # ANNUL from ECR should be mapped by ITU to perform REVERSAL
         # transaction.
-        b'\x31\x34': 'ANNUL',
-        b'\x31\x35': 'Balance Inquiry transaction',
-        b'\x31\x36': 'X-report',
-        b'\x31\x37': 'Z-report',
-        b'\x31\x38': 'send Offline Transactions to HOST',
-        b'\x31\x39': 'Turnover report',
-        b'\x31\x3A': 'print of stored EOT transactions',
-        b'\x31\x3B': 'not used',
-        b'\x31\x3C': 'not used',
-        b'\x31\x3D': 'not used',
-        b'\x31\x3E': 'not used',
+        b'\x31\x34': 'reverse',
+        b'\x31\x35': 'balance_inquiry_transaction',
+        b'\x31\x36': 'x_report',
+        b'\x31\x37': 'z_report',
+        b'\x31\x38': 'send_offline_transactions',
+        b'\x31\x39': 'turnover_report',
+        b'\x31\x3A': 'print_eot_transactions',
+        b'\x31\x3B': 'not_used',
+        b'\x31\x3C': 'not_used',
+        b'\x31\x3D': 'not_used',
+        b'\x31\x3E': 'not_used',
     })
 
     fs = ConstantField(b'\x1C')
@@ -407,23 +407,23 @@ class ResponseMessage(BBSMessage):
         # OK. The Receiver has received and processed the data correctly
         b'\x30\x30': 'success',
         # Not OK. The receiver is not able to process the received data
-        b'\x30\x33': 'error',
+        b'\x30\x33': 'failure',
         # Not OK. Shall be treated as if H3033 is received
-        b'\x30\x34': 'error',
-        b'\x30\x35': 'error',
-        b'\x30\x36': 'error',
-        b'\x30\x37': 'error',
-        b'\x30\x38': 'error',
-        b'\x30\x39': 'error',
+        b'\x30\x34': 'failure',
+        b'\x30\x35': 'failure',
+        b'\x30\x36': 'failure',
+        b'\x30\x37': 'failure',
+        b'\x30\x38': 'failure',
+        b'\x30\x39': 'failure',
         # ECR display busy, ITU may try again once
-        b'\x31\x31': 'display busy',
+        b'\x31\x31': 'display_busy',
         # ECR printer busy, ITU may try again once
-        b'\x31\x32': 'printer busy',
+        b'\x31\x32': 'printer_busy',
         # ECR printer out of function.
         # If the ECR sends H3133, the ITU must interrupt the current
         # transaction, and wait for the next 'Bank-Mode' initiation from the
         # ECR
-        b'\x31\x33': 'printer broken'
+        b'\x31\x33': 'printer_broken'
     })
 
     endcode = ConstantField(b'\x5d')
