@@ -26,7 +26,7 @@ class TestStream(unittest.TestCase):
         # Make sure that chains don't hold references to previous links
         chain = _Chain()
         head = weakref.ref(chain)
-        for i in range(100000):
+        for i in range(1000):
             chain = chain.push(i)
         gc.collect()
         self.assertIsNone(head())
@@ -35,16 +35,16 @@ class TestStream(unittest.TestCase):
         # Make sure that chain iterators do not hold a reference to the head
         chain = _Chain()
 
-        def push_100000(chain):
-            for i in range(100000):
+        def push_1000(chain):
+            for i in range(1000):
                 chain = chain.push(i)
-        t = threading.Thread(target=push_100000, args=(chain,), daemon=True)
+        t = threading.Thread(target=push_1000, args=(chain,), daemon=True)
 
         iterator = StreamIterator(chain)
         chain = weakref.ref(chain)
 
         t.start()
-        for i in range(100000):
+        for i in range(1000):
             next(iterator)
 
         t.join()
