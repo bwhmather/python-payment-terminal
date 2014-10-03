@@ -439,6 +439,11 @@ class BBSMsgRouterTerminal(Terminal):
     def __init__(self, port):
         self._connection = _BBSMsgRouterConnection(port)
 
+    def start_payment(self, amount, *, before_commit=None):
+        return _BBSPaymentSession(
+            terminal, amount, before_commit=before_commit
+        )
+
     def shutdown(self):
         self._connection.shutdown()
 
