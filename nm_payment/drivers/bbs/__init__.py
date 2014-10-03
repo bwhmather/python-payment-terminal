@@ -79,10 +79,11 @@ class _BBSPaymentSession(_BBSSession, PaymentSession):
     def __init__(self, terminal, amount, commit_callback):
         super(_BBSPaymentSession, self).__init__(terminal)
         self._future = Future()
+        self._lock = Lock()
 
         self._commit_callback = commit_callback
 
-        self._terminal.request_transfer_amount(amount).wait()
+        self._terminal.request_transfer_amount(amount).result()
 
     def _rollback(self):
         try:
@@ -98,7 +99,8 @@ class _BBSPaymentSession(_BBSSession, PaymentSession):
         with self._lock:
             if self._future.set_running_or_notify_cancel():
                 if result == 'success':
-                    if self._commit_callback and not self._commit_callback(result):
+                    if (self._commit_callback and
+                            not self._commit_callback(result)):
                         try:
                             self._rollback()
                         except Exception as e:
@@ -112,6 +114,8 @@ class _BBSPaymentSession(_BBSSession, PaymentSession):
                     self._future.set_exception(Exception())
             else:
                 if result == 'success':
+                    # An attempt was made to cancel but local mode message was
+                    # already in flight
                     # TODO
                     self._rollback()
 
