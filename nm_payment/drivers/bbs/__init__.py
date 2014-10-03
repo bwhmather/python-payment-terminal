@@ -2,7 +2,7 @@ import queue
 import struct
 import socket
 from urllib.parse import urlparse
-from concurrent.futures import Future
+import concurrent.futures
 from threading import Thread, Lock
 
 import logging
@@ -10,6 +10,8 @@ log = logging.getLogger('nm_payment')
 
 from nm_payment.base import Terminal, PaymentSession
 from nm_payment.stream import Stream
+from nm_payment.exceptions import SessionCompletedError, SessionCancelledError
+
 from . import messages
 
 
@@ -40,6 +42,13 @@ class TerminalError(Exception):
 class ResponseInterruptedError(Exception):
     """ Request was sent but connection was closed before receiving a response
     """
+    pass
+
+
+class CancelFailedError(Exception):
+    """ Really bad
+    """
+    # TODO
     pass
 
 
@@ -78,7 +87,7 @@ class _BBSSession(object):
 class _BBSPaymentSession(_BBSSession, PaymentSession):
     def __init__(self, connection, amount, commit_callback):
         super(_BBSPaymentSession, self).__init__(connection)
-        self._future = Future()
+        self._future = concurrent.futures.Future()
         self._lock = Lock()
 
         self._commit_callback = commit_callback
@@ -107,10 +116,11 @@ class _BBSPaymentSession(_BBSSession, PaymentSession):
                             self._future.set_exception(e)
                             raise
                         else:
-                            self._future.set_exception(AbortedError())
+                            self._future.set_exception(SessionCancelledError())
                     else:
                         self._future.set_result(None)
                 else:
+                    # TODO interpret errors from ITU
                     self._future.set_exception(Exception())
             else:
                 if result == 'success':
@@ -129,26 +139,24 @@ class _BBSPaymentSession(_BBSSession, PaymentSession):
         pass
 
     def cancel(self):
+        """
+        :raises SessionCompletedError:
+            If session has already finished
+        """
         with self._lock:
             if self._future.cancelled():
                 return
 
             if not self._future.cancel():
-                raise CompletedError()
+                raise SessionCompletedError()
 
             self._connection.request_cancel().wait()
 
-    def cancelled(self):
-        return self._future.cancelled()
-
-    def done(self):
-        return self._future.done()
-
     def result(self, timeout=None):
-        return self._future.result()
-
-    def exception(self, timeout=None):
-        return self._future.exception()
+        try:
+            return self._future.result()
+        except concurrent.futures.CancelledError as e:
+            raise SessionCancelledError() from e
 
     def add_done_callback(self, fn):
         return self._future.add_done_callback(fn)
@@ -156,11 +164,11 @@ class _BBSPaymentSession(_BBSSession, PaymentSession):
     def unbind(self):
         try:
             self.cancel()
-        except CompletedError:
+        except SessionCompletedError:
             pass
 
 
-class _Message(Future):
+class _Message(concurrent.futures.Future):
     def __init__(self, data):
         super(_Message, self).__init__()
         self.data = data
@@ -441,7 +449,7 @@ class BBSMsgRouterTerminal(Terminal):
 
     def start_payment(self, amount, *, before_commit=None):
         return _BBSPaymentSession(
-            terminal, amount, before_commit=before_commit
+            self._connection, amount, before_commit=before_commit
         )
 
     def shutdown(self):
