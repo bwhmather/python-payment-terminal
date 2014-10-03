@@ -44,10 +44,10 @@ class ResponseInterruptedError(Exception):
 
 
 class _BBSSession(object):
-    def __init__(self, terminal):
+    def __init__(self, connection):
         super(_BBSSession, self).__init__()
-        self._terminal = terminal
-        self._terminal._set_current_session(self)
+        self._connection = connection
+        self._connection._set_current_session(self)
 
     def on_req_display_text(
             self, data, *,
@@ -76,18 +76,18 @@ class _BBSSession(object):
 
 
 class _BBSPaymentSession(_BBSSession, PaymentSession):
-    def __init__(self, terminal, amount, commit_callback):
-        super(_BBSPaymentSession, self).__init__(terminal)
+    def __init__(self, connection, amount, commit_callback):
+        super(_BBSPaymentSession, self).__init__(connection)
         self._future = Future()
         self._lock = Lock()
 
         self._commit_callback = commit_callback
 
-        self._terminal.request_transfer_amount(amount).result()
+        self._connection.request_transfer_amount(amount).result()
 
     def _rollback(self):
         try:
-            self._terminal.request_rollback().wait()
+            self._connection.request_rollback().wait()
         except Exception as e:
             # XXX This is really really bad
             raise CancelFailedError() from e
@@ -136,7 +136,7 @@ class _BBSPaymentSession(_BBSSession, PaymentSession):
             if not self._future.cancel():
                 raise CompletedError()
 
-            self._terminal.request_cancel().wait()
+            self._connection.request_cancel().wait()
 
     def cancelled(self):
         return self._future.cancelled()
@@ -174,9 +174,9 @@ class _Request(_Message):
     expects_response = True
 
 
-class BBSMsgRouterTerminal(Terminal):
+class _BBSMsgRouterConnection(object):
     def __init__(self, port):
-        super(BBSMsgRouterTerminal, self).__init__()
+        super(_BBSMsgRouterConnection, self).__init__()
 
         self._REQUEST_CODES = {
             messages.DisplayTextMessage: self._on_req_display_text,
@@ -433,6 +433,14 @@ class BBSMsgRouterTerminal(Terminal):
         """ Shutdown without blocking.
         """
         Thread(target=self.shutdown).start()
+
+
+class BBSMsgRouterTerminal(Terminal):
+    def __init__(self, port):
+        self._connection = _BBSMsgRouterConnection(port)
+
+    def shutdown(self):
+        self._connection.shutdown()
 
 
 def open_tcp(uri, *args, **kwargs):
