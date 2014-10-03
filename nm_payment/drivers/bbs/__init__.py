@@ -76,28 +76,44 @@ class _BBSSession(object):
 
 
 class _BBSPaymentSession(_BBSSession, PaymentSession):
-    def __init__(self, terminal, amount):
+    def __init__(self, terminal, amount, commit_callback):
         super(_BBSPaymentSession, self).__init__(terminal)
+        self._future = Future()
 
-        # 'authorizing', 'authorized', 'completed',
-        self._state = 'authorizing'
-
-        self._authorized = Future()
-        self._completed = Future()
+        self._commit_callback = commit_callback
 
         self._terminal.request_transfer_amount(amount).wait()
+
+    def _rollback(self):
+        try:
+            self._terminal.request_rollback().wait()
+        except Exception as e:
+            # XXX This is really really bad
+            raise CancelFailedError() from e
 
     def on_req_local_mode(self, result, **kwargs):
         """
         .. note:: Internal use only
         """
         with self._lock:
-            if result == 'success':
-                # TODO
-                self.authorized.set_result(None)
+            if self._future.set_running_or_notify_cancel():
+                if result == 'success':
+                    if self._commit_callback and not self._commit_callback(result):
+                        try:
+                            self._rollback()
+                        except Exception as e:
+                            self._future.set_exception(e)
+                            raise
+                        else:
+                            self._future.set_exception(AbortedError())
+                    else:
+                        self._future.set_result(None)
+                else:
+                    self._future.set_exception(Exception())
             else:
-                self._authorized.set_exception()
-                self._completed.set_exception()
+                if result == 'success':
+                    # TODO
+                    self._rollback()
 
     def on_display_text(self, text):
         pass
@@ -108,83 +124,30 @@ class _BBSPaymentSession(_BBSSession, PaymentSession):
     def on_reset_timer(self, timeout):
         pass
 
-    def is_authorized(self):
-        return self._authorized.done() and not self.authorized.cancelled()
-
-    def wait_authorized(self, timeout=None):
-        return self._authorized.result(timeout=timeout)
-
-    def add_authorized_callback(self, callback):
-        self._authorized.add_done_callback(callback)
-
-    def is_completed(self):
-        return self._completed.done() and not self.completed.cancelled()
-
-    def wait_completed(self, timeout=None):
-        return self._completed.result(timeout=timeout)
-
-    def add_completed_callback(self):
-        self._completed.add_done_callback(callback)
-
-    def commit(self):
-        """
-        :raises NotAuthorizedError: If card reader has not yet authorized the
-            payment
-        :raises CompletedError: If commit has already been called
-        :raises CancelledError: If the payment has been cancelled or reversed
-        """
-        with self._lock:
-            if self._state != 'authorized':
-                raise {
-                    'authorizing': NotAuthorizedError,
-                    'completed': CompletedError,
-                    'cancelled': CancelledError,
-                }.get(self._state, RuntimeError)()
-
-            # BBS uses roll back so don't actually have to do anything other
-            # than lock down the session
-
-            self._state = 'completed'
-        # result must be set outside of lock to avoid deadlock
-        # _state is set to completed so there shouldn't be a race condition
-        self._completed.set_result(None)
-
     def cancel(self):
-        set_cancelled = False
-
         with self._lock:
-            if self._state == 'authorizing':
-                self._terminal.request_cancel().wait()
-                self._state = 'cancelled'
-
-            elif self._state == 'authorized':
-                self._terminal.request_rollback().wait()
-                self._state = 'cancelled'
-
-                # can't set result of completed future while holding _lock as
-                # doing so will result in deadlocks.  Set flag instead
-                set_cancelled = True
-
-            elif self._state == 'cancelled':
-                # already cancelled. Nothing to do
+            if self._future.cancelled():
                 return
-            elif self._state == 'completed':
+
+            if not self._future.cancel():
                 raise CompletedError()
-            else:
-                raise RuntimeError('invalid state: %r' % self._state)
 
-        # cancel the completed callback after releasing the lock
-        # set_cancelled will only be set after authorized Future result has
-        # already been set so ignore it
-        if set_cancelled:
-            self._completed.cancel()
+            self._terminal.request_cancel().wait()
 
-        try:
-            self.wait_completed()
-        except CancelledError:
-            return
-        else:
-            raise NotCancelledError()
+    def cancelled(self):
+        return self._future.cancelled()
+
+    def done(self):
+        return self._future.done()
+
+    def result(self, timeout=None):
+        return self._future.result()
+
+    def exception(self, timeout=None):
+        return self._future.exception()
+
+    def add_done_callback(self, fn):
+        return self._future.add_done_callback(fn)
 
     def unbind(self):
         try:
