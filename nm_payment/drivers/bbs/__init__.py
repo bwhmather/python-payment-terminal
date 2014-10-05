@@ -52,18 +52,18 @@ class _BBSSession(object):
 
 
 class _BBSPaymentSession(_BBSSession, PaymentSession):
-    def __init__(self, connection, amount, commit_callback):
+    def __init__(self, connection, amount, before_commit):
         super(_BBSPaymentSession, self).__init__(connection)
         self._future = concurrent.futures.Future()
         self._lock = Lock()
 
-        self._commit_callback = commit_callback
+        self._commit_callback = before_commit
 
         self._connection.request_transfer_amount(amount).result()
 
     def _rollback(self):
         try:
-            self._connection.request_rollback().wait()
+            self._connection.request_reversal().result()
         except Exception as e:
             # XXX This is really really bad
             raise CancelFailedError() from e
@@ -117,7 +117,7 @@ class _BBSPaymentSession(_BBSSession, PaymentSession):
             if not self._future.cancel():
                 raise SessionCompletedError()
 
-            self._connection.request_cancel().wait()
+            self._connection.request_cancel().result()
 
     def result(self, timeout=None):
         try:
