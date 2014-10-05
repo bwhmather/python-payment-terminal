@@ -1,3 +1,5 @@
+from time import sleep
+from threading import Thread
 from concurrent.futures import Future
 import unittest
 
@@ -46,3 +48,87 @@ class TestBBSPaymentSession(unittest.TestCase):
         s.on_req_local_mode('success')
 
         self.assertTrue(commit_callback_called)
+
+    def test_cancel(self):
+        class TerminalMock(TerminalMockBase):
+            def request_transfer_amount(self, amount):
+                self.state_change('bank', 'local')
+                return fulfilled_future()
+
+            def request_cancel(self):
+                self.state_change('local', 'cancelling')
+                return fulfilled_future()
+
+        terminal = TerminalMock(self)
+
+        def commit_callback(result):
+            # cancel should succeed to this should never happen
+            self.fail('commit callback called')
+
+        s = _BBSPaymentSession(terminal, 10, commit_callback)
+        self.assertEqual(terminal.state, 'local')
+
+        # cancel blocks until payment is successfully cancelled so needs to run
+        # in a separate thread
+        t = Thread(target=s.cancel, daemon=True)
+        t.start()
+
+        # yield to cancel thread, cancel thread should have called
+        # `request_cancel` but should not return until local mode message has
+        # been received
+        sleep(0)  # XXX might not actually yield
+        self.assertEqual(terminal.state, 'cancelling')
+        self.assertTrue(t.is_alive())
+
+        s.on_req_local_mode('failure')
+
+        t.join()
+
+    def test_late_cancel(self):
+        class TerminalMock(TerminalMockBase):
+            def request_transfer_amount(self, amount):
+                self.state_change('bank', 'local')
+                return fulfilled_future()
+
+            def request_cancel(self):
+                self.state_change('local', 'cancelling')
+                return fulfilled_future()
+
+            def request_reversal(self):
+                self.state_change('success', 'reversing')
+                return fulfilled_future()
+
+        terminal = TerminalMock(self)
+
+        def commit_callback(result):
+            # cancel should succeed to this should never happen
+            self.fail('commit callback called')
+
+        s = _BBSPaymentSession(terminal, 10, before_commit=commit_callback)
+        self.assertEqual(terminal.state, 'local')
+
+        # cancel blocks until payment is successfully cancelled so needs to run
+        # in a separate thread
+        t = Thread(target=s.cancel, daemon=True)
+        t.start()
+
+        # yield to cancel thread, cancel thread should have called
+        # `request_cancel` but should not return until local mode message has
+        sleep(0)  # XXX might not actually yield
+        self.assertTrue(t.is_alive())
+
+        # too slow, transaction goes through anyway
+        terminal.state_change('cancelling', 'success')
+        s.on_req_local_mode('success')
+
+        # session should try to reverse the transaction
+        self.assertEqual(terminal.state, 'reversing')
+
+        # cancel thread should still be blocked
+        sleep(0)  # XXX might not actually yield
+        self.assertTrue(t.is_alive())
+
+        # local mode message to indicate reversal succeeded
+        s.on_req_local_mode('success')
+
+        t.join()
