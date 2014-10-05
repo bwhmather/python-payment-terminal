@@ -11,7 +11,9 @@ class PaymentSession(Session):
 
 
 class Terminal(object):
-    def start_payment(self, amount, *, on_print=None, on_display=None):
+    def start_payment(
+            self, amount, *, before_commit=None,
+            on_print=None, on_display=None):
         """
         :returns: a new active ``PaymentSession`` object
         """
