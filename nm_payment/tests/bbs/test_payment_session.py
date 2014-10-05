@@ -3,6 +3,7 @@ from threading import Thread
 from concurrent.futures import Future
 import unittest
 
+from nm_payment.exceptions import SessionCancelledError
 from nm_payment.drivers.bbs import _BBSPaymentSession
 
 
@@ -47,6 +48,9 @@ class TestBBSPaymentSession(unittest.TestCase):
         self.assertEqual(terminal.state, 'local')
         s.on_req_local_mode('success')
 
+        # should not raise anything
+        s.result()
+
         self.assertTrue(commit_callback_called)
 
     def test_cancel(self):
@@ -83,6 +87,8 @@ class TestBBSPaymentSession(unittest.TestCase):
         s.on_req_local_mode('failure')
 
         t.join()
+
+        self.assertRaises(SessionCancelledError, s.result)
 
     def test_late_cancel(self):
         class TerminalMock(TerminalMockBase):
@@ -132,3 +138,40 @@ class TestBBSPaymentSession(unittest.TestCase):
         s.on_req_local_mode('success')
 
         t.join()
+
+        self.assertRaises(SessionCancelledError, s.result)
+
+    def test_too_late_cancel(self):
+        # TODO cancel called after session completed
+        pass
+
+    def test_dont_commit(self):
+        class TerminalMock(TerminalMockBase):
+            def request_transfer_amount(self, amount):
+                self.state_change('bank', 'local')
+                return fulfilled_future()
+
+            def request_cancel(self):
+                self.state_change('local', 'cancelling')
+                return fulfilled_future()
+
+            def request_reversal(self):
+                self.state_change('success', 'reversing')
+                return fulfilled_future()
+
+        terminal = TerminalMock(self)
+
+        def commit_callback(result):
+            nonlocal commit_callback_called
+            commit_callback_called = True
+            return False
+        commit_callback_called = False
+
+        s = _BBSPaymentSession(terminal, 10, before_commit=commit_callback)
+        self.assertEqual(terminal.state, 'local')
+
+        s.on_req_local_mode('success')
+
+        self.assertTrue(commit_callback_called)
+
+        self.assertRaises(SessionCancelledError, s.result)
