@@ -20,7 +20,7 @@ class TerminalMockBase(object):
         self.test = test
         self.state = 'bank'
 
-    def _set_current_session(self, session):
+    def set_current_session(self, session):
         pass
 
     def state_change(self, initial, final):

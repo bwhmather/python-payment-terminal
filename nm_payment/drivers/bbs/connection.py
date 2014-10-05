@@ -87,7 +87,7 @@ class _BBSMsgRouterConnection(object):
         self._receive_thread = Thread(target=self._receive_loop, daemon=True)
         self._receive_thread.start()
 
-    def _set_current_session(self, session):
+    def set_current_session(self, session):
         with self._current_session_lock:
             if self._current_session is not None:
                 self._current_session.unbind()

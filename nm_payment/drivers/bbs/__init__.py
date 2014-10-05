@@ -23,7 +23,7 @@ class _BBSSession(object):
     def __init__(self, connection):
         super(_BBSSession, self).__init__()
         self._connection = connection
-        self._connection._set_current_session(self)
+        self._connection.set_current_session(self)
 
     def on_req_display_text(
             self, data, *,
