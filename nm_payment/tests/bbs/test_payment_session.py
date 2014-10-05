@@ -151,10 +151,6 @@ class TestBBSPaymentSession(unittest.TestCase):
                 self.state_change('bank', 'local')
                 return fulfilled_future()
 
-            def request_cancel(self):
-                self.state_change('local', 'cancelling')
-                return fulfilled_future()
-
             def request_reversal(self):
                 self.state_change('success', 'reversing')
                 return fulfilled_future()
@@ -170,8 +166,12 @@ class TestBBSPaymentSession(unittest.TestCase):
         s = _BBSPaymentSession(terminal, 10, before_commit=commit_callback)
         self.assertEqual(terminal.state, 'local')
 
+        terminal.state_change('local', 'success')
         s.on_req_local_mode('success')
 
         self.assertTrue(commit_callback_called)
+
+        self.assertEqual(terminal.state, 'reversing')
+        s.on_req_local_mode('success')
 
         self.assertRaises(SessionCancelledError, s.result)
