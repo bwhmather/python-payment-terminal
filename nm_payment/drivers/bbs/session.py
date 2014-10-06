@@ -14,7 +14,9 @@ class BBSSession(object):
         # TODO
         pass
 
-    def on_req_local_mode(self, data):
+    def on_req_local_mode(
+            self, *, result, acc, issuer_id, pan, timestamp, ver_method,
+            session_num, stan_auth, seq_no, tip):
         # should be implemented by subclass
         raise NotImplementedError()
 
