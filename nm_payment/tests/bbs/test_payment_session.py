@@ -3,7 +3,7 @@ from threading import Thread
 from concurrent.futures import Future
 import unittest
 
-from nm_payment.exceptions import SessionCancelledError
+from nm_payment.exceptions import SessionCancelledError, CancelFailedError
 from nm_payment.drivers.bbs.payment_session import BBSPaymentSession
 
 
@@ -142,8 +142,22 @@ class TestBBSPaymentSession(unittest.TestCase):
         self.assertRaises(SessionCancelledError, s.result)
 
     def test_too_late_cancel(self):
-        # TODO cancel called after session completed
-        pass
+        class TerminalMock(TerminalMockBase):
+            def request_transfer_amount(self, amount):
+                self.state_change('bank', 'local')
+                return fulfilled_future()
+
+        terminal = TerminalMock(self)
+
+        def commit_callback(result):
+            return True
+
+        s = BBSPaymentSession(terminal, 10, before_commit=commit_callback)
+        s.on_req_local_mode('success')
+        # should not raise anything
+        s.result()
+
+        self.assertRaises(CancelFailedError, s.cancel)
 
     def test_dont_commit(self):
         class TerminalMock(TerminalMockBase):
