@@ -2,7 +2,17 @@ class Session(object):
     pass
 
 
+class Payment(object):
+    def __init__(
+            self, amount, pan, card_end_date,
+            provider_scheme, provider_auth_code):
+        pass
+
+
 class PaymentSession(Session):
+    def result(self, timeout=None):
+        raise NotImplementedError()
+
     def cancel(self):
         """
         :raises CompletedError: If commit has already been called
