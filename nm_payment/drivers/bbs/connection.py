@@ -107,6 +107,10 @@ class BBSMsgRouterConnection(object):
                 self._current_session.unbind()
             self._current_session = session
 
+    def get_current_session(self):
+        with self._current_session_lock:
+            return self._current_session
+
     def _request(self, message):
         """ Send a request to the card reader
 
@@ -201,7 +205,7 @@ class BBSMsgRouterConnection(object):
                 self._shutdown_async()
 
     def _on_req_display_text(self, message):
-        return self._current_session.on_req_display_text(
+        return self.get_current_session().on_req_display_text(
             message.text,
             prompt_customer=message.prompt_customer,
             expects_input=message.expects_input
@@ -213,7 +217,7 @@ class BBSMsgRouterConnection(object):
 
     def _on_req_reset_timer(self, message):
         # TODO (possibly) reinterpret errors
-        return self._current_session.on_req_reset_timer(message.seconds)
+        return self.get_current_session().on_req_reset_timer(message.seconds)
 
     def _on_req_local_mode(self, message):
         # TODO
