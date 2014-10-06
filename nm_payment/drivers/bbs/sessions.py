@@ -5,9 +5,9 @@ import logging
 log = logging.getLogger('nm_payment')
 
 from nm_payment.base import PaymentSession
-from nm_payment.exceptions import SessionCompletedError, SessionCancelledError
-
-from .connection import _BBSMsgRouterConnection
+from nm_payment.exceptions import (
+    SessionCompletedError, SessionCancelledError, CancelFailedError,
+)
 
 
 class _BBSSession(object):
@@ -60,37 +60,45 @@ class _BBSPaymentSession(_BBSSession, PaymentSession):
 
         self._connection.request_transfer_amount(amount).result()
 
-    def _rollback(self):
+    def _start_reversal(self):
         try:
+            self._state = REVERSING
             self._connection.request_reversal().result()
         except Exception as e:
             # XXX This is really really bad
             raise CancelFailedError() from e
 
-    def _payment_local_mode(self, result, **kwargs):
+    def _on_local_mode_running(self, result, **kwargs):
         if result == 'success':
             if (self._commit_callback and
                     not self._commit_callback(result)):
                 try:
-                    self._rollback()
+                    self._start_reversal()
                 except Exception as e:
-                    self._state = FINSHED
+                    self._state = BROKEN
                     self._future.set_exception(e)
                     raise
-                else:
-                    self._state = FINISHED
-                    self._future.set_exception(SessionCancelledError())
             else:
                 self._future.set_result(None)
         else:
             # TODO interpret errors from ITU
+            self._state = FINISHED
             self._future.set_exception(Exception())
 
-    def _cancelling_local_mode(self, result, **kwargs):
-        raise NotImplementedError()
+    def _on_local_mode_cancelling(self, result, **kwargs):
+        if result == 'success':
+            self._start_reversal()
+        else:
+            self._state = FINISHED
+            self._future.set_exception(SessionCancelledError())
 
-    def _reversal_local_mode(self, result, **kwargs):
-        raise NotImplementedError()
+    def _on_local_mode_reversing(self, result, **kwargs):
+        if result == 'success':
+            self._state = FINISHED
+            self._future.set_exception(SessionCancelledError())
+        else:
+            # XXX
+            self._state = BROKEN
 
     def on_req_local_mode(self, *args, **kwargs):
         """
@@ -98,11 +106,11 @@ class _BBSPaymentSession(_BBSSession, PaymentSession):
         """
         with self._lock:
             if self._state == RUNNING:
-                return _payment_local_mode(*args, **kwargs)
+                return self._on_local_mode_running(*args, **kwargs)
             elif self._state == CANCELLING:
-                return _cancelling_local_mode(*args, **kwargs)
+                return self._on_local_mode_cancelling(*args, **kwargs)
             elif self._state == REVERSING:
-                _reversal_local_mode(*args, **kwargs)
+                return self._on_local_mode_reversing(*args, **kwargs)
             else:
                 raise Exception("invalid state")
 
@@ -121,13 +129,18 @@ class _BBSPaymentSession(_BBSSession, PaymentSession):
             If session has already finished
         """
         with self._lock:
-            if self._future.cancelled():
-                return
+            if self._state == RUNNING:
+                self._state == CANCELLING
+                # non-blocking, don't wait for result
+                self._connection.request_cancel()
+        try:
+            self.result()
+        except SessionCancelledError:
+            # this is what we want
+            return
+        else:
+            raise CancelFailedError()
 
-            if not self._future.cancel():
-                raise SessionCompletedError()
-
-            self._connection.request_cancel().result()
 
     def result(self, timeout=None):
         try:
