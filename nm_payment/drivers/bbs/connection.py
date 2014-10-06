@@ -54,6 +54,20 @@ class _Request(_Message):
 
 
 class BBSMsgRouterConnection(object):
+    """ Represents a connection to the bbs msg router.
+
+    Responsible for serializing outgoing messages and dispatching incoming
+    messages.
+
+    `_on_...` methods represent callbacks for received messages.  The mapping
+    from message type to callback is defined in the `_REQUEST_CODES` attribute.
+    Most of these will just unpack the message and call the corresponding
+    method on the current session.
+
+    `request_...` methods wrap building and submitting message structs
+    corresponding to a single request to the message router.  They will
+    normally return a future that yields the response.
+    """
     def __init__(self, port):
         super(BBSMsgRouterConnection, self).__init__()
 
@@ -96,7 +110,8 @@ class BBSMsgRouterConnection(object):
     def _request(self, message):
         """ Send a request to the card reader
 
-        :param message: bytestring to send to the ITU
+        :param message:
+            bytestring to send to the ITU
 
         :return: a Future that will yield the response
         """
@@ -139,7 +154,8 @@ class BBSMsgRouterConnection(object):
     def _respond(self, message, *, async=False):
         """ Respond to a request from the card reader
 
-        :param bytes message: bytestring to send to the ITU
+        :param bytes message:
+            bytestring to send to the ITU
         :param bool async:
             If ``True``, :py:meth:`_respond` will block until the response has
             been sent.
