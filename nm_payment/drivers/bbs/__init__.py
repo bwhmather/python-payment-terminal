@@ -7,7 +7,7 @@ log = logging.getLogger('nm_payment')
 from nm_payment.base import Terminal
 
 from .connection import _BBSMsgRouterConnection
-from .sessions import _BBSPaymentSession
+from .payment_session import _BBSPaymentSession
 
 
 class BBSMsgRouterTerminal(Terminal):
