@@ -122,7 +122,7 @@ class BBSPaymentSession(BBSSession, PaymentSession):
 
     def result(self, timeout=None):
         try:
-            return self._future.result()
+            return self._future.result(timeout=timeout)
         except concurrent.futures.CancelledError as e:
             raise SessionCancelledError() from e
 
