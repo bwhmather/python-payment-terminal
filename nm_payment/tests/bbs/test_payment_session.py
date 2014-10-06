@@ -4,7 +4,7 @@ from concurrent.futures import Future
 import unittest
 
 from nm_payment.exceptions import SessionCancelledError
-from nm_payment.drivers.bbs import _BBSPaymentSession
+from nm_payment.drivers.bbs.payment_session import BBSPaymentSession
 
 
 def fulfilled_future(result=None):
@@ -43,7 +43,7 @@ class TestBBSPaymentSession(unittest.TestCase):
             return True
         commit_callback_called = False
 
-        s = _BBSPaymentSession(terminal, 10, commit_callback)
+        s = BBSPaymentSession(terminal, 10, commit_callback)
 
         self.assertEqual(terminal.state, 'local')
         s.on_req_local_mode('success')
@@ -69,7 +69,7 @@ class TestBBSPaymentSession(unittest.TestCase):
             # cancel should succeed to this should never happen
             self.fail('commit callback called')
 
-        s = _BBSPaymentSession(terminal, 10, commit_callback)
+        s = BBSPaymentSession(terminal, 10, commit_callback)
         self.assertEqual(terminal.state, 'local')
 
         # cancel blocks until payment is successfully cancelled so needs to run
@@ -110,7 +110,7 @@ class TestBBSPaymentSession(unittest.TestCase):
             # cancel should succeed to this should never happen
             self.fail('commit callback called')
 
-        s = _BBSPaymentSession(terminal, 10, before_commit=commit_callback)
+        s = BBSPaymentSession(terminal, 10, before_commit=commit_callback)
         self.assertEqual(terminal.state, 'local')
 
         # cancel blocks until payment is successfully cancelled so needs to run
@@ -163,7 +163,7 @@ class TestBBSPaymentSession(unittest.TestCase):
             return False
         commit_callback_called = False
 
-        s = _BBSPaymentSession(terminal, 10, before_commit=commit_callback)
+        s = BBSPaymentSession(terminal, 10, before_commit=commit_callback)
         self.assertEqual(terminal.state, 'local')
 
         terminal.state_change('local', 'success')

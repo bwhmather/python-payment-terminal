@@ -9,7 +9,7 @@ from nm_payment.exceptions import (
     SessionCompletedError, SessionCancelledError, CancelFailedError,
 )
 
-from .session import _BBSSession
+from .session import BBSSession
 
 
 RUNNING = 'RUNNING'
@@ -19,9 +19,9 @@ FINISHED = 'FINISHED'
 BROKEN = 'BROKEN'
 
 
-class _BBSPaymentSession(_BBSSession, PaymentSession):
+class BBSPaymentSession(BBSSession, PaymentSession):
     def __init__(self, connection, amount, before_commit):
-        super(_BBSPaymentSession, self).__init__(connection)
+        super(BBSPaymentSession, self).__init__(connection)
         self._future = concurrent.futures.Future()
         self._lock = Lock()
 

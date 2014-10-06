@@ -53,9 +53,9 @@ class _Request(_Message):
     expects_response = True
 
 
-class _BBSMsgRouterConnection(object):
+class BBSMsgRouterConnection(object):
     def __init__(self, port):
-        super(_BBSMsgRouterConnection, self).__init__()
+        super(BBSMsgRouterConnection, self).__init__()
 
         self._REQUEST_CODES = {
             messages.DisplayTextMessage: self._on_req_display_text,

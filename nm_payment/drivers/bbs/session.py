@@ -1,6 +1,6 @@
-class _BBSSession(object):
+class BBSSession(object):
     def __init__(self, connection):
-        super(_BBSSession, self).__init__()
+        super(BBSSession, self).__init__()
         self._connection = connection
         self._connection.set_current_session(self)
 

@@ -6,16 +6,16 @@ log = logging.getLogger('nm_payment')
 
 from nm_payment.base import Terminal
 
-from .connection import _BBSMsgRouterConnection
-from .payment_session import _BBSPaymentSession
+from .connection import BBSMsgRouterConnection
+from .payment_session import BBSPaymentSession
 
 
 class BBSMsgRouterTerminal(Terminal):
     def __init__(self, port):
-        self._connection = _BBSMsgRouterConnection(port)
+        self._connection = BBSMsgRouterConnection(port)
 
     def start_payment(self, amount, *, before_commit=None):
-        return _BBSPaymentSession(
+        return BBSPaymentSession(
             self._connection, amount, before_commit=before_commit
         )
 
@@ -31,3 +31,5 @@ def open_tcp(uri, *args, **kwargs):
     port = s.makefile(mode='r+b', buffering=True)
 
     return BBSMsgRouterTerminal(port)
+
+__all__ = ['BBSMsgRouterTerminal', 'open_tcp']

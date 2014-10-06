@@ -3,7 +3,7 @@ import threading
 import unittest
 
 from nm_payment.drivers.bbs.connection import (
-    read_frame, _BBSMsgRouterConnection,
+    read_frame, BBSMsgRouterConnection,
 )
 
 
@@ -36,5 +36,5 @@ class TestBBSConnection(unittest.TestCase):
             def close(self):
                 self._closed.set()
 
-        terminal = _BBSMsgRouterConnection(CloseableFile())
+        terminal = BBSMsgRouterConnection(CloseableFile())
         terminal.shutdown()
