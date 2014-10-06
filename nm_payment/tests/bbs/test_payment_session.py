@@ -66,7 +66,7 @@ class TestBBSPaymentSession(unittest.TestCase):
         terminal = TerminalMock(self)
 
         def commit_callback(result):
-            # cancel should succeed to this should never happen
+            # cancel should succeed so this should never happen
             self.fail('commit callback called')
 
         s = BBSPaymentSession(terminal, 10, before_commit=commit_callback)
@@ -107,7 +107,7 @@ class TestBBSPaymentSession(unittest.TestCase):
         terminal = TerminalMock(self)
 
         def commit_callback(result):
-            # cancel should succeed to this should never happen
+            # cancel should succeed so this should never happen
             self.fail('commit callback called')
 
         s = BBSPaymentSession(terminal, 10, before_commit=commit_callback)
