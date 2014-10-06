@@ -14,9 +14,15 @@ class BBSMsgRouterTerminal(Terminal):
     def __init__(self, port):
         self._connection = BBSMsgRouterConnection(port)
 
-    def start_payment(self, amount, *, before_commit=None):
+    def start_payment(
+            self, amount, *, before_commit=None,
+            on_print=None, on_display=None):
+        """
+        :returns: a new active ``PaymentSession`` object
+        """
         return BBSPaymentSession(
-            self._connection, amount, before_commit=before_commit
+            self._connection, amount, before_commit=before_commit,
+            on_print=on_print, on_display=on_display
         )
 
     def shutdown(self):

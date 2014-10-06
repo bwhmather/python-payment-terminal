@@ -43,7 +43,7 @@ class TestBBSPaymentSession(unittest.TestCase):
             return True
         commit_callback_called = False
 
-        s = BBSPaymentSession(terminal, 10, commit_callback)
+        s = BBSPaymentSession(terminal, 10, before_commit=commit_callback)
 
         self.assertEqual(terminal.state, 'local')
         s.on_req_local_mode('success')
@@ -69,7 +69,7 @@ class TestBBSPaymentSession(unittest.TestCase):
             # cancel should succeed to this should never happen
             self.fail('commit callback called')
 
-        s = BBSPaymentSession(terminal, 10, commit_callback)
+        s = BBSPaymentSession(terminal, 10, before_commit=commit_callback)
         self.assertEqual(terminal.state, 'local')
 
         # cancel blocks until payment is successfully cancelled so needs to run

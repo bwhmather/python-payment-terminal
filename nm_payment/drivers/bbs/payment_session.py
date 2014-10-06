@@ -20,7 +20,9 @@ BROKEN = 'BROKEN'
 
 
 class BBSPaymentSession(BBSSession, PaymentSession):
-    def __init__(self, connection, amount, before_commit):
+    def __init__(
+            self, connection, amount, *, before_commit=None,
+            on_print=None, on_display=None):
         super(BBSPaymentSession, self).__init__(connection)
         self._future = concurrent.futures.Future()
         self._lock = Lock()
