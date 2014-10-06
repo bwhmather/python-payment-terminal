@@ -107,7 +107,7 @@ class BBSPaymentSession(BBSSession, PaymentSession):
         """
         with self._lock:
             if self._state == RUNNING:
-                self._state == CANCELLING
+                self._state = CANCELLING
                 # non-blocking, don't wait for result
                 self._connection.request_cancel()
 
