@@ -12,3 +12,10 @@ class SessionCancelledError(SessionCompletedError):
     """ Could not perform operation on session as session has been cancelled
     """
     pass
+
+
+class CancelFailedError(Exception):
+    """ Really bad
+    """
+    # TODO
+    pass
