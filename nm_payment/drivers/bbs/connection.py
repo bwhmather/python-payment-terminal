@@ -196,8 +196,8 @@ class _BBSMsgRouterConnection(object):
         raise NotImplementedError()
 
     def _on_req_reset_timer(self, message):
-        # TODO
-        raise NotImplementedError()
+        # TODO (possibly) reinterpret errors
+        return self._current_session.on_req_reset_timer(message.seconds)
 
     def _on_req_local_mode(self, message):
         # TODO
