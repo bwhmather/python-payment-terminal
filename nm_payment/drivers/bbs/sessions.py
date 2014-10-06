@@ -46,6 +46,7 @@ RUNNING = 'RUNNING'
 CANCELLING = 'CANCELLING'
 REVERSING = 'REVERSING'
 FINISHED = 'FINISHED'
+BROKEN = 'BROKEN'
 
 
 class _BBSPaymentSession(_BBSSession, PaymentSession):
@@ -70,20 +71,24 @@ class _BBSPaymentSession(_BBSSession, PaymentSession):
 
     def _on_local_mode_running(self, result, **kwargs):
         if result == 'success':
-            if (self._commit_callback and
-                    not self._commit_callback(result)):
+            reverse = self._state == CANCELLING
+
+            if self._commit_callback is not None:
+                # TODO can't decide on commit callback api
                 try:
-                    self._start_reversal()
-                except Exception as e:
-                    self._state = BROKEN
-                    self._future.set_exception(e)
-                    raise
+                    reverse = not self._commit_callback(result)
+                except Exception:
+                    reverse = True
+
+            if reverse:
+                self._start_reversal()
             else:
+                self._state = FINISHED
                 self._future.set_result(None)
         else:
             # TODO interpret errors from ITU
             self._state = FINISHED
-            self._future.set_exception(Exception())
+            self._future.set_exception(SessionCancelledError("itu error"))
 
     def _on_local_mode_cancelling(self, result, **kwargs):
         if result == 'success':
@@ -133,6 +138,8 @@ class _BBSPaymentSession(_BBSSession, PaymentSession):
                 self._state == CANCELLING
                 # non-blocking, don't wait for result
                 self._connection.request_cancel()
+
+        # block until session finishes
         try:
             self.result()
         except SessionCancelledError:
@@ -140,7 +147,6 @@ class _BBSPaymentSession(_BBSSession, PaymentSession):
             return
         else:
             raise CancelFailedError()
-
 
     def result(self, timeout=None):
         try:
