@@ -30,6 +30,8 @@ class BBSPaymentSession(BBSSession, PaymentSession):
         self._state = RUNNING
 
         self._commit_callback = before_commit
+        self._print_callback = on_print
+        self._display_callback = on_display
 
         self._connection.request_transfer_amount(amount).result()
 
@@ -92,10 +94,12 @@ class BBSPaymentSession(BBSSession, PaymentSession):
                 raise Exception("invalid state")
 
     def on_display_text(self, text):
-        pass
+        if self._display_callback is not None:
+            self._display_callback(text)
 
     def on_print_text(self, commands):
-        pass
+        if self._print_callback is not None:
+            self._print_callback(commands)
 
     def on_reset_timer(self, timeout):
         pass
