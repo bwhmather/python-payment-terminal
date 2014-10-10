@@ -7,6 +7,10 @@ class ClosedError(Exception):
 
 
 class _Chain(object):
+    """ A linked list of futures.
+
+    Each future yields a result and the next link in the chain
+    """
     def __init__(self):
         self._next = Future()
 
@@ -53,24 +57,24 @@ class StreamIterator(object):
 class Stream(object):
     def __init__(self, initial=None):
         self._lock = Lock()
-        self._chain = _Chain()
-        self._chain.push(initial)
+        self._head = _Chain()
+        self._tail = self._head
 
-    def head(self):
-        return self._chain.wait_result()
-
-    def stream(self):
-        return StreamIterator(self._chain)
+    def __iter__(self):
+        return StreamIterator(self._head)
 
     def push(self, value):
         with self._lock:
-            # head of chain should always have a result set
-            self._chain = self._chain.wait_next()
-            self._chain.push(value)
+            self._tail = self._tail.push(value)
 
     def close(self):
+        """ Stop further writes and notify all waiting listeners
+        """
         with self._lock:
-            self._chain = self._chain.wait_next()
-            self._chain.close()
+            self._tail.close()
+
+    def drop(self):
+        with self._lock:
+            self._head = self._tail
 
 __all__ = ['ClosedError', 'TimeoutError', '_Chain', 'Stream']
