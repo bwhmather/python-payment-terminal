@@ -77,4 +77,4 @@ class Stream(object):
         with self._lock:
             self._head = self._tail
 
-__all__ = ['ClosedError', 'TimeoutError', '_Chain', 'Stream']
+__all__ = ['ClosedError', 'TimeoutError', 'Stream']
