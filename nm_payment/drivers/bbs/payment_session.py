@@ -45,20 +45,21 @@ class BBSPaymentSession(BBSSession, PaymentSession):
 
     def _on_local_mode_running(self, result, **kwargs):
         if result == 'success':
-            reverse = self._state == CANCELLING
+            commit = True
+            self._state == CANCELLING
 
             if self._commit_callback is not None:
                 # TODO can't decide on commit callback api
                 try:
-                    reverse = not self._commit_callback(result)
+                    commit = self._commit_callback(result)
                 except Exception:
-                    reverse = True
+                    commit = False
 
-            if reverse:
-                self._start_reversal()
-            else:
+            if commit:
                 self._state = FINISHED
                 self._future.set_result(None)
+            else:
+                self._start_reversal()
         else:
             # TODO interpret errors from ITU
             self._state = FINISHED
