@@ -1,10 +1,11 @@
 from urllib.parse import urlparse
 
-from nm_payment.drivers import bbs
+from nm_payment.drivers import bbs, dummy
 
 
 _BUILTIN_DRIVERS = {
     'bbs+tcp': bbs.open_tcp,
+    'dummy': dummy.open_dummy,
 }
 
 _drivers = {}
