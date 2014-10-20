@@ -221,7 +221,7 @@ class BBSMsgRouterConnection(object):
 
     def _on_req_local_mode(self, message):
         # TODO
-        raise NotImplementedError()
+        return self.get_current_session().on_req_local_mode(message.result)
 
     def _on_req_keyboard_input(self, message):
         # TODO
