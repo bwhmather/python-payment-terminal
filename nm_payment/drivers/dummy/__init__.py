@@ -23,7 +23,7 @@ class DummyPaymentSession(PaymentSession):
         self._thread.start()
 
     def _sleep(self, timeout):
-        if not self._event.wait(timeout):
+        if self._cancel.wait(timeout):
             raise SessionCancelledError()
 
     def _sequence(self):
@@ -34,7 +34,7 @@ class DummyPaymentSession(PaymentSession):
 
             self._on_display("Enter pin")
 
-            self._sleep(5)
+            self._sleep(3)
 
             commit = True
             if self._before_commit is not None:
@@ -73,10 +73,21 @@ class DummyPaymentSession(PaymentSession):
             raise self._exception
         return self._result
 
+    def add_done_callback(self, fn):
+        def wait():
+            try:
+                self.result()
+            except Exception:
+                pass
+            fn(self)
+
+        Thread(target=wait, daemon=True).start()
+
 
 class DummyTerminal(Terminal):
     def __init__(self):
         self._lock = Lock()
+        self._current_session = None
 
     def start_payment(
             self, amount, *, before_commit=None,
@@ -89,7 +100,7 @@ class DummyTerminal(Terminal):
                 except SessionCompletedError:
                     pass
             self._current_session = DummyPaymentSession(
-                self._connection, amount, before_commit=before_commit,
+                amount, before_commit=before_commit,
                 on_print=on_print, on_display=on_display
             )
         return self._current_session
