@@ -84,11 +84,10 @@ class BBSMsgRouterConnection(object):
 
         self._port = port
 
-        self._shutdown = False
-        self._shutdown_lock = Lock()
+        self._lock = Lock()
 
+        self._shutdown = False
         self._current_session = None
-        self._current_session_lock = Lock()
 
         # A queue of Message futures to be sent from the send thread
         self._send_queue = queue.Queue()
@@ -102,13 +101,13 @@ class BBSMsgRouterConnection(object):
         self._receive_thread.start()
 
     def set_current_session(self, session):
-        with self._current_session_lock:
+        with self._lock:
             if self._current_session is not None:
                 self._current_session.unbind()
             self._current_session = session
 
     def get_current_session(self):
-        with self._current_session_lock:
+        with self._lock:
             return self._current_session
 
     def _request(self, message):
@@ -299,7 +298,7 @@ class BBSMsgRouterConnection(object):
         Threadsafe and can be called multiple times safely.
         Will block until everything has been cleaned up.
         """
-        with self._shutdown_lock:
+        with self._lock:
             if not self._shutdown:
                 log.debug("shutting down")
                 self._shutdown = True
