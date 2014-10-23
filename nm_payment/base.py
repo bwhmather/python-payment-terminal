@@ -15,7 +15,7 @@ class PaymentSession(Session):
 
     def cancel(self):
         """
-        :raises CompletedError: If commit has already been called
+        :raises SessionCompletedError: If commit has already been called
         """
         raise NotImplementedError()
 
