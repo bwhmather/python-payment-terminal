@@ -13,9 +13,24 @@ class PaymentSession(Session):
     def result(self, timeout=None):
         raise NotImplementedError()
 
-    def cancel(self):
+    def add_done_callback(self, fn):
+        """Register a function to be called when the payment has failed or
+        completed.
+
+        :param fn:
+            A function taking the completed payment session as its only
+            argument
         """
-        :raises SessionCompletedError: If commit has already been called
+        raise NotImplementedError()
+
+    def cancel(self):
+        """Tries to cancel the payment.
+
+        Does not roll back the payment if it has already been completed.
+
+        :raises CancelFailedError:
+            If called after commit callback has been triggered or if the
+            payment could not be cancelled for some other reason
         """
         raise NotImplementedError()
 
