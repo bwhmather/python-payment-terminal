@@ -6,6 +6,7 @@ from concurrent.futures import Future
 import logging
 log = logging.getLogger('nm_payment')
 
+from nm_payment.exceptions import SessionCompletedError
 from . import messages
 
 
@@ -302,6 +303,18 @@ class BBSMsgRouterConnection(object):
             if not self._shutdown:
                 log.debug("shutting down")
                 self._shutdown = True
+                if self._current_session is not None:
+                    try:
+                        self._current_session.cancel()
+                    except SessionCompletedError:
+                        # Can't cancel as session has completed successfully
+                        # This is fine.
+                        pass
+                    except Exception:
+                        log.exception("could not cancel session")
+                        # not ideal but we still want to shut down
+                        pass
+
                 # send loop will block trying to fetch items from it's queue
                 # forever unless we push something onto it
                 self._send_queue.put(None)
