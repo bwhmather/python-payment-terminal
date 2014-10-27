@@ -28,9 +28,13 @@ class PaymentSession(Session):
 
         Does not roll back the payment if it has already been completed.
 
+        :raises SessionCompletedError:
+            If called after commit callback has been triggered preventing
+            cancellation.
+
         :raises CancelFailedError:
-            If called after commit callback has been triggered or if the
-            payment could not be cancelled for some other reason
+            If the payment could not be cancelled for some other reason.  This
+            is really bad
         """
         raise NotImplementedError()
 
