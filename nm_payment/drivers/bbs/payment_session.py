@@ -29,6 +29,8 @@ class BBSPaymentSession(BBSSession, PaymentSession):
 
         self._state = RUNNING
 
+        self.amount = amount
+
         self._commit_callback = before_commit
         self._print_callback = on_print
         self._display_callback = on_display
