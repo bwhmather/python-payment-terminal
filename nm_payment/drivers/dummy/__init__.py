@@ -1,6 +1,6 @@
 from threading import Thread, Lock, Event
 
-from nm_payment.base import Terminal, PaymentSession
+from nm_payment.base import Terminal, PaymentSession, Payment
 from nm_payment.exceptions import SessionCancelledError, SessionCompletedError
 
 
@@ -11,6 +11,8 @@ class DummyPaymentSession(PaymentSession):
             on_display=lambda *args, **kwargs: None):
         self._lock = Lock()
         self._cancel = Event()
+
+        self.amount = amount
 
         self._before_commit = before_commit
         self._on_display = on_display
@@ -36,15 +38,14 @@ class DummyPaymentSession(PaymentSession):
 
             self._sleep(3)
 
+            self._result = Payment(self.amount)
+
             commit = True
             if self._before_commit is not None:
                 # TODO result
-                commit = self._before_commit(None)
+                commit = self._before_commit(self._result)
 
-            if commit:
-                # TODO
-                self._result = True
-            else:
+            if not commit:
                 self._exception = SessionCancelledError()
         except BaseException as e:
             with self._lock:
