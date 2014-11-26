@@ -6,7 +6,12 @@ class Payment(object):
     def __init__(
             self, amount, pan, card_end_date,
             provider_scheme, provider_auth_code):
-        pass
+        self.amount = amount
+        self.pan = pan
+        self.card_end_date = card_end_date
+        self.provider_scheme = provider_scheme
+        self.provider_auth_code = provider_auth_code
+
 
 
 class PaymentSession(Session):
