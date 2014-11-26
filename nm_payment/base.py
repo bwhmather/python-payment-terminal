@@ -4,8 +4,8 @@ class Session(object):
 
 class Payment(object):
     def __init__(
-            self, amount, pan, card_end_date,
-            provider_scheme, provider_auth_code):
+            self, amount, *, pan=None, card_end_date=None,
+            provider_scheme=None, provider_auth_code=None):
         self.amount = amount
         self.pan = pan
         self.card_end_date = card_end_date
