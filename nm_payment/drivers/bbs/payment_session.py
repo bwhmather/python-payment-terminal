@@ -50,16 +50,18 @@ class BBSPaymentSession(BBSSession, PaymentSession):
             commit = True
             self._state == CANCELLING
 
+            # TODO populate properly
+            result_object = Payment(self.amount)
             if self._commit_callback is not None:
                 # TODO can't decide on commit callback api
                 try:
-                    commit = self._commit_callback(result)
+                    commit = self._commit_callback(result_object)
                 except Exception:
                     commit = False
 
             if commit:
                 self._state = FINISHED
-                self._future.set_result(None)
+                self._future.set_result(result_object)
             else:
                 self._start_reversal()
         else:

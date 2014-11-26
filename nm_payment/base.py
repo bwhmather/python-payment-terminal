@@ -13,7 +13,6 @@ class Payment(object):
         self.provider_auth_code = provider_auth_code
 
 
-
 class PaymentSession(Session):
     def result(self, timeout=None):
         raise NotImplementedError()
