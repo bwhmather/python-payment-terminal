@@ -4,7 +4,7 @@ from threading import Lock
 import logging
 log = logging.getLogger('nm_payment')
 
-from nm_payment.base import PaymentSession
+from nm_payment.base import PaymentSession, Payment
 from nm_payment.exceptions import (
     SessionCompletedError, SessionCancelledError, CancelFailedError,
 )
