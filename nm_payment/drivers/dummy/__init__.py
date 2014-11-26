@@ -1,5 +1,8 @@
 from threading import Thread, Lock, Event
 
+import logging
+log = logging.getLogger('nm_payment')
+
 from nm_payment.base import Terminal, PaymentSession, Payment
 from nm_payment.exceptions import SessionCancelledError, SessionCompletedError
 
@@ -43,7 +46,11 @@ class DummyPaymentSession(PaymentSession):
             commit = True
             if self._before_commit is not None:
                 # TODO result
-                commit = self._before_commit(self._result)
+                try:
+                    commit = self._before_commit(self._result)
+                except Exception:
+                    log.exception("error in commit callback")
+                    commit = False
 
             if not commit:
                 self._exception = SessionCancelledError()
