@@ -57,6 +57,7 @@ class BBSPaymentSession(BBSSession, PaymentSession):
                 try:
                     commit = self._commit_callback(result_object)
                 except Exception:
+                    log.exception("error in commit callback")
                     commit = False
 
             if commit:
