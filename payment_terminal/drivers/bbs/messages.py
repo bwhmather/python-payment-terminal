@@ -302,8 +302,16 @@ class TransferAmountMessage(BBSMessage):
 
     timestamp = DateTimeField()  # not used
     id_no = TextField(6)  # not used
+    # Normally set to "0000". If set in Pre-Auth, the number is a reference to
+    # a previous Preauth. If set in Adjustment transaction, the field shall be
+    # set to the corresponding number received in the Local Mode from the
+    # Pre-Authorisation.
     seq_no = TextField(4)  # TODO
+    # Operator identification. A fixed field with 4 characters. If not
+    # implemented by the ECR vendor, the field should be filled with zeroes
+    # (H30's).
     operator_id = TextField(4)
+    # Not used, but tested by the ITU because of error prevention)
     mode = EnumField({
         b'\x30': None,
     })
@@ -323,11 +331,15 @@ class TransferAmountMessage(BBSMessage):
         b'\x3c': 'merchandise_reversal',
         b'\x3d': 'merchandise_correction',
     })
-
     amount = PriceField(11)
-    unused_type = EnumField({b'\x30': None})
+    # Not used, but tested by the ITU because of error prevention)
+    unused_type = EnumField({
+        b'\x30': None,
+    })
+    # Only used if transfer_type == 'purchase_with_ashback' (H33), else it will
+    # be filled with H20.
     cashback_amount = PriceField(11)
-    top_up_type = EnumField({
+    is_top_up = EnumField({
         b'\x30': True,
         b'\x31': False,
     })
