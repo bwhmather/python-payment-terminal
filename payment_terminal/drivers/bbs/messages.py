@@ -207,11 +207,13 @@ class LocalModeMessage(BBSMessage):
 class KeyboardInputRequestMessage(BBSMessage):
     type = ConstantField(b'\x46')
 
+    # Indicates if the entered chars should be echoed on the ECR display or not
     echo = EnumField({
         b'\x20': True,
         b'\x21': False,
     })
 
+    # Minimum and maximum number of chars to enter (as a decimal ascii string)
     min_chars = TextField(2)
     max_chars = TextField(2)
 
