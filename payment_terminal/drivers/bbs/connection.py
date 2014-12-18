@@ -6,7 +6,7 @@ from concurrent.futures import Future
 import logging
 log = logging.getLogger('payment_terminal')
 
-from payment_terminal.exceptions import SessionCompletedError
+from payment_terminal.exceptions import SessionCompletedError, ConnectionError
 from . import messages
 
 
@@ -34,7 +34,7 @@ class TerminalError(Exception):
     pass
 
 
-class ResponseInterruptedError(Exception):
+class ResponseInterruptedError(ConnectionError):
     """ Request was sent but connection was closed before receiving a response
     """
     pass
