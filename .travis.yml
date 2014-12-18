@@ -1,0 +1,22 @@
+language: python
+sudo: false
+python:
+  - "3.4"
+
+install:
+  - "pip install -e ."
+  - "pip install pyflakes"
+  - "pip install pep8"
+
+script:
+  - "python setup.py test"
+  - "pep8 payment_terminal setup.py"
+  - "pyflakes payment_terminal setup.py"
+
+deploy:
+  provider: pypi
+  user: "bwhmather-travis"
+  password:
+    secure: "mvwUiDVtyv0Lu4V/ZACwcOTXuMctGcuC7Ckt5y3ONvScHBhH1WosT6zzmoBQNju2GuX7bQd+DaoRQGC/Jad/lxXoeIHV+RRzIKnCHBDJ1Yk5DCNMP/58094lQHT7TDM0pMPrZGdRKk4b0fAha84wtQxmoFKnaAaAY7eMeQOhjRE="
+  on:
+    branch: "master"
