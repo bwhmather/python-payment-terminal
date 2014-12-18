@@ -10,6 +10,18 @@ setup(
     license='BSD',
     description="Library for interacting with card readers",
     long_description=__doc__,
+    classifiers=[
+        'Development Status :: 4 - Beta',
+        'Intended Audience :: Developers',
+        'License :: OSI Approved :: BSD License',
+        'Operating System :: OS Independent',
+        'Programming Language :: Python :: 3',
+        'Topic :: Software Development :: Libraries :: Python Modules',
+        'Topic :: System :: Hardware :: Hardware Drivers',
+        'Topic :: System :: Hardware :: Card Readers',
+        'Topic :: Office/Business :: Financial :: Point-Of-Sale',
+        'Topic :: Payment',
+    ],
     install_requires=[
     ],
     packages=find_packages(),
