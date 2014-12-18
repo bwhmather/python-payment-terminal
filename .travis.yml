@@ -5,13 +5,17 @@ python:
 
 install:
   - "pip install -e ."
+  - "pip install coveralls"
   - "pip install pyflakes"
   - "pip install pep8"
 
 script:
-  - "python setup.py test"
+  - "coverage run --source=payment_terminal setup.py test"
   - "pep8 payment_terminal setup.py"
   - "pyflakes payment_terminal setup.py"
+
+after_success:
+  - "coveralls"
 
 deploy:
   provider: pypi
