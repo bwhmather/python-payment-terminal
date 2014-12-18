@@ -2,14 +2,13 @@ from setuptools import setup, find_packages
 
 
 setup(
-    name='nm-payment',
-    url='github.com/NewmanOnline/nm-payment',
+    name='payment-terminal',
+    url='https://github.com/bwhmather/python-payment-terminal',
     version='0.1.0',
-    author='Newman Team',
-    author_email='newman@newmanonline.org.uk',
-    maintainer='',
-    license='Commercial, All rights reserved.',
-    description="",
+    author='Ben Mather',
+    author_email='bwhmather@bwhmather.com',
+    license='BSD',
+    description="Library for interacting with card readers",
     long_description=__doc__,
     install_requires=[
     ],
@@ -17,6 +16,5 @@ setup(
     package_data={
         '': ['*.*'],
     },
-    zip_safe=False,
-    test_suite='nm_payment.tests.suite',
+    test_suite='payment_terminal.tests.suite',
 )

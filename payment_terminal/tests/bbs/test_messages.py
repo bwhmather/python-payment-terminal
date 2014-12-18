@@ -1,7 +1,7 @@
 import unittest
 
-from nm_payment.drivers.bbs.fields import ConstantField
-import nm_payment.drivers.bbs.messages as m
+from payment_terminal.drivers.bbs.fields import ConstantField
+import payment_terminal.drivers.bbs.messages as m
 
 
 class TestBBSMessages(unittest.TestCase):

@@ -1,4 +1,4 @@
-Newman Payment
-==============
+Python Payment Terminal
+=======================
 
-Drivers for card readers
+Library for interacting with card readers

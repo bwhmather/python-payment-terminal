@@ -2,7 +2,7 @@ import io
 import threading
 import unittest
 
-from nm_payment.drivers.bbs.connection import (
+from payment_terminal.drivers.bbs.connection import (
     read_frame, BBSMsgRouterConnection,
 )
 

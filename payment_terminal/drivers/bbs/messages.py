@@ -1,7 +1,7 @@
 from collections import OrderedDict
 
 import logging
-log = logging.getLogger('nm_payment')
+log = logging.getLogger('payment_terminal')
 
 from .fields import (
     BBSField, DelimitedField,

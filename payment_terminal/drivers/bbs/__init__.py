@@ -2,9 +2,9 @@ import socket
 from urllib.parse import urlparse
 
 import logging
-log = logging.getLogger('nm_payment')
+log = logging.getLogger('payment_terminal')
 
-from nm_payment.base import Terminal
+from payment_terminal.base import Terminal
 
 from .connection import BBSMsgRouterConnection
 from .payment_session import BBSPaymentSession

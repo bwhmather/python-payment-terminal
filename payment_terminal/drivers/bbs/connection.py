@@ -4,9 +4,9 @@ from threading import Thread, Lock
 from concurrent.futures import Future
 
 import logging
-log = logging.getLogger('nm_payment')
+log = logging.getLogger('payment_terminal')
 
-from nm_payment.exceptions import SessionCompletedError
+from payment_terminal.exceptions import SessionCompletedError
 from . import messages
 
 

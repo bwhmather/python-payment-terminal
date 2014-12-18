@@ -1,7 +1,7 @@
 import threading
 import unittest
 
-from nm_payment.drivers.bbs import BBSMsgRouterTerminal
+from payment_terminal.drivers.bbs import BBSMsgRouterTerminal
 
 
 class TestBBSTerminal(unittest.TestCase):

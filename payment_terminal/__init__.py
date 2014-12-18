@@ -1,6 +1,6 @@
 from urllib.parse import urlparse
 
-from nm_payment.drivers import bbs, dummy
+from payment_terminal.drivers import bbs, dummy
 
 
 _BUILTIN_DRIVERS = {

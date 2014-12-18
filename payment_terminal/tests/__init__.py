@@ -1,6 +1,6 @@
 import unittest
 
-from nm_payment.tests.bbs import (
+from payment_terminal.tests.bbs import (
     TestBBSFields, TestBBSMessages,
     TestBBSTerminal, TestBBSConnection,
     TestBBSPaymentSession,

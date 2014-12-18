@@ -1,6 +1,6 @@
 import unittest
 
-import nm_payment.drivers.bbs.fields as f
+import payment_terminal.drivers.bbs.fields as f
 
 
 class TestBBSFields(unittest.TestCase):

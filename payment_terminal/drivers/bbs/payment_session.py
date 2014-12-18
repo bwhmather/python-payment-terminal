@@ -2,10 +2,10 @@ import concurrent.futures
 from threading import Lock
 
 import logging
-log = logging.getLogger('nm_payment')
+log = logging.getLogger('payment_terminal')
 
-from nm_payment.base import PaymentSession, Payment
-from nm_payment.exceptions import (
+from payment_terminal.base import PaymentSession, Payment
+from payment_terminal.exceptions import (
     SessionCompletedError, SessionCancelledError, CancelFailedError,
 )
 

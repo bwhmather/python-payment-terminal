@@ -3,8 +3,8 @@ from threading import Thread
 from concurrent.futures import Future
 import unittest
 
-from nm_payment.exceptions import SessionCancelledError, CancelFailedError
-from nm_payment.drivers.bbs.payment_session import BBSPaymentSession
+from payment_terminal.exceptions import SessionCancelledError, CancelFailedError
+from payment_terminal.drivers.bbs.payment_session import BBSPaymentSession
 
 
 def fulfilled_future(result=None):
