@@ -1,5 +1,6 @@
 from urllib.parse import urlparse
 
+from payment_terminal.exceptions import NotSupportedError
 from payment_terminal.drivers import bbs, dummy
 
 
@@ -22,8 +23,8 @@ def open_terminal(uri):
         raise ValueError("Malformed terminal uri")
     try:
         driver = _drivers[scheme]
-    except KeyError:
-        raise Exception("Unrecognised terminal uri")
+    except KeyError as e:
+        raise NotSupportedError("Unrecognised terminal uri") from e
     else:
         return driver(uri)
 
