@@ -29,7 +29,7 @@ class BBSMsgRouterTerminal(Terminal):
         self._connection.shutdown()
 
 
-def open_tcp(uri, *args, **kwargs):
+def open_tcp(uri):
     uri_parts = urlparse(uri)
 
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

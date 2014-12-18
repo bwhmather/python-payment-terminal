@@ -119,5 +119,5 @@ class DummyTerminal(Terminal):
         pass
 
 
-def open_dummy(uri, *args, **kwargs):
+def open_dummy(uri):
     return DummyTerminal()

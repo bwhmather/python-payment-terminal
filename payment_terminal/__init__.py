@@ -16,7 +16,7 @@ def register_driver(uri_scheme, factory):
     _drivers[uri_scheme] = factory
 
 
-def open_terminal(uri, *args, **kwargs):
+def open_terminal(uri):
     scheme = urlparse(uri).scheme
     if not scheme or scheme == uri:
         raise ValueError("Malformed terminal uri")
@@ -25,6 +25,6 @@ def open_terminal(uri, *args, **kwargs):
     except KeyError:
         raise Exception("Unrecognised terminal uri")
     else:
-        return driver(uri, *args, **kwargs)
+        return driver(uri)
 
 __all__ = ['register_driver', 'open_terminal']
