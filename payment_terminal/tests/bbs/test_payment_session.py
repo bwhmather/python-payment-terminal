@@ -3,7 +3,9 @@ from threading import Thread
 from concurrent.futures import Future
 import unittest
 
-from payment_terminal.exceptions import SessionCancelledError, CancelFailedError
+from payment_terminal.exceptions import (
+    SessionCancelledError, CancelFailedError,
+)
 from payment_terminal.drivers.bbs.payment_session import BBSPaymentSession
 
 
