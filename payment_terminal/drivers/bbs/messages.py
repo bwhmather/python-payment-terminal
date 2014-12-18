@@ -345,7 +345,9 @@ class TransferAmountMessage(BBSMessage):
     })
     art_amount = PriceField(11)
 
-    # TODO DATA, ART#
+    data = DelimitedField(TextField(), delimiter=b';')
+
+    # TODO ART#
 
 
 class TransferCardDataMessage(BBSMessage):
