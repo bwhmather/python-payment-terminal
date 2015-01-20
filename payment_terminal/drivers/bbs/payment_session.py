@@ -48,7 +48,6 @@ class BBSPaymentSession(BBSSession, PaymentSession):
     def _on_local_mode_running(self, result, **kwargs):
         if result == 'success':
             commit = True
-            self._state = CANCELLING
 
             # TODO populate properly
             result_object = Payment(self.amount)
