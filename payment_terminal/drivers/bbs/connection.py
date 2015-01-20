@@ -150,12 +150,15 @@ class BBSMsgRouterConnection(object):
     def request_reversal(self):
         """ Request that the ITU reverse the most recent payment.
 
-        Maps directly to a single H53 request to the ITU
+        Maps directly to a single H51 request to the ITU
 
         .. note:: Should only be called by the current session.
         """
-        # TODO
-        raise NotImplementedError()
+        message = messages.TransferAmountMessage(
+            transfer_type='reversal',
+            amount=amount
+        )
+        return self._request(message.pack())
 
     def _respond(self, message, *, async=False):
         """ Respond to a request from the card reader
