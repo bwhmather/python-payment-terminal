@@ -13,7 +13,7 @@ from .fields import (
 
 
 class BBSMessageMeta(type):
-    def __new__(mcls, cls, bases, d):
+    def __new__(mcs, cls, bases, d):
         fields = OrderedDict()
 
         # inherit fields from first base class with `_fields` attribute
@@ -28,10 +28,10 @@ class BBSMessageMeta(type):
                 fields[name] = field
 
         d['_fields'] = fields
-        return type.__new__(mcls, cls, bases, d)
+        return type.__new__(mcs, cls, bases, d)
 
     @classmethod
-    def __prepare__(mcls, cls, bases):
+    def __prepare__(mcs, cls, bases):
         # the dictionary to use to store class attributes
         # need to return OrderedDict rather than default dict as attribute
         # order affects parsing
