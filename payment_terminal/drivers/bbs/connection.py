@@ -217,8 +217,9 @@ class BBSMsgRouterConnection(object):
         )
 
     def _on_req_print_text(self, message):
-        # TODO
-        raise NotImplementedError()
+        # TODO might make sense to handle printing in the connection rather
+        # than in the session
+        return self.get_current_session.on_req_print_text(message.commands)
 
     def _on_req_reset_timer(self, message):
         # TODO (possibly) reinterpret errors
