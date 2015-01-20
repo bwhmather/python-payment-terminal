@@ -130,7 +130,7 @@ class BBSMsgRouterConnection(object):
 
         .. note:: Should only be called by the current session.
         """
-        message = messages.TransferAmmountMessage()
+        message = messages.TransferAmountMessage()
         return self._request(message.pack())
 
     def request_abort(self):
