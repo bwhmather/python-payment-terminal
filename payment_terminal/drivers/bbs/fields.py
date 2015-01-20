@@ -230,13 +230,14 @@ class ConstantField(BBSField):
     # TODO ConstantField is really a special case of enum
     # wasn't sure if I wanted to keep the interface for enum or use the value
     # attribute of constant for deciding what the type of a message was.
-    default = None
-
     def __init__(self, value):
         super(ConstantField, self).__init__(len(value))
         self.value = value
+        self.default = value
 
-    def pack(self, ignored):
+    def pack(self, value):
+        if value != self.value:
+            raise ValueError("passed value does not match expected")
         return self.value
 
     def unpack(self, data):
