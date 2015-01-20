@@ -15,7 +15,23 @@ class Payment(object):
 
 class PaymentSession(Session):
     def result(self, timeout=None):
+        """Returns a payment result object representing the completed payment
+        If the payment has not been completed, waits up to `timeout` seconds
+        before raising a `TimeoutError`
+        """
         raise NotImplementedError()
+
+    def exception(self, timeout=None):
+        """Return the exception raised by the payment.
+        """
+        try:
+            self.result(timeout=timeout)
+        except TimeoutError:
+            raise
+        except Exception as e:
+            return e
+        else:
+            return None
 
     def add_done_callback(self, fn):
         """Register a function to be called when the payment has failed or
@@ -39,6 +55,17 @@ class PaymentSession(Session):
         :raises CancelFailedError:
             If the payment could not be cancelled for some other reason.  This
             is really bad
+        """
+        raise NotImplementedError()
+
+    def cancelled(self):
+        """Return `True` if the payment was successfully cancelled.
+        """
+        raise NotImplementedError()
+
+    def running(self):
+        """Return `True` if the payment is currently being committed and cannot
+        be cancelled.
         """
         raise NotImplementedError()
 
