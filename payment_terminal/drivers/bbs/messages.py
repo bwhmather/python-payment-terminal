@@ -241,7 +241,7 @@ class KeyboardInputMessage(BBSMessage):
         # TODO yuck yuck yuck
         fields = OrderedDict()
 
-        fields['header'], size = cls.type.read(data)
+        fields['type'], size = cls.type.unpack(data)
 
         text_data = data[size:-cls.delimiter.size]
         fields['text'], size = cls.text.unpack(text_data)
