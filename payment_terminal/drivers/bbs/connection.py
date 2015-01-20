@@ -18,7 +18,6 @@ def read_frame(port):
         raise Exception("header truncated")
 
     size, = struct.unpack('>H', header)
-    assert size > 1
     frame = port.read(size)
     if len(frame) < size:
         raise Exception("unexpected end of file")
