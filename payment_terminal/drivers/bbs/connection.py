@@ -144,8 +144,8 @@ class BBSMsgRouterConnection(object):
 
         .. note:: Should only be called by the current session.
         """
-        # TODO
-        raise NotImplementedError()
+        message = messages.AdministrationMessage(adm_code='cancel')
+        return self._request(message.pack())
 
     def request_reversal(self, amount):
         """ Request that the ITU reverse the most recent payment.
