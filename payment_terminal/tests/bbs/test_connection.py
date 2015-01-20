@@ -17,17 +17,17 @@ class TestBBSConnection(unittest.TestCase):
         self.assertEqual(read_frame(port), b'12345')
         self.assertEqual(read_frame(port), b'123456')
 
-    def test_end_of_file(self):
+    def test_read_end_of_file(self):
         port = io.BytesIO(b'')
         # TODO more specific
         self.assertRaises(Exception, read_frame, port)
 
-    def test_truncated_header(self):
+    def test_read_truncated_header(self):
         port = io.BytesIO(b'a')
         # TODO more specific
         self.assertRaises(Exception, read_frame, port)
 
-    def test_truncated_body(self):
+    def test_read_truncated_body(self):
         port = io.BytesIO(b'\x00\x09trunca')
         # TODO more specific
         self.assertRaises(Exception, read_frame, port)
