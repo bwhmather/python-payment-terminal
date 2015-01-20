@@ -191,7 +191,7 @@ class BBSMsgRouterConnection(object):
                     # shutdown will push None onto the send queue to stop send
                     # loop from blocking on get forever
                     return
-                log.debug("sending message: %r" % message)
+                log.debug("sending message: %r", message)
                 if message.set_running_or_notify_cancel():
                     write_frame(self._port, message.data)
 
@@ -282,7 +282,7 @@ class BBSMsgRouterConnection(object):
         try:
             while not self._shutdown:
                 frame = read_frame(self._port)
-                log.debug("message recieved: %r" % frame)
+                log.debug("message recieved: %r", frame)
                 message = messages.unpack_itu_message(frame)
 
                 if message.is_response:
