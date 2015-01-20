@@ -102,7 +102,7 @@ class TestBBSPaymentSession(unittest.TestCase):
                 self.state_change('local', 'cancelling')
                 return fulfilled_future()
 
-            def request_reversal(self):
+            def request_reversal(self, amount):
                 self.state_change('success', 'reversing')
                 return fulfilled_future()
 
@@ -167,7 +167,7 @@ class TestBBSPaymentSession(unittest.TestCase):
                 self.state_change('bank', 'local')
                 return fulfilled_future()
 
-            def request_reversal(self):
+            def request_reversal(self, amount):
                 self.state_change('success', 'reversing')
                 return fulfilled_future()
 

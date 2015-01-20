@@ -147,7 +147,7 @@ class BBSMsgRouterConnection(object):
         # TODO
         raise NotImplementedError()
 
-    def request_reversal(self):
+    def request_reversal(self, amount):
         """ Request that the ITU reverse the most recent payment.
 
         Maps directly to a single H51 request to the ITU
@@ -156,7 +156,7 @@ class BBSMsgRouterConnection(object):
         """
         message = messages.TransferAmountMessage(
             transfer_type='reversal',
-            amount=amount
+            amount=amount,
         )
         return self._request(message.pack())
 

@@ -40,7 +40,7 @@ class BBSPaymentSession(BBSSession, PaymentSession):
     def _start_reversal(self):
         try:
             self._state = REVERSING
-            self._connection.request_reversal().result()
+            self._connection.request_reversal(self.amount).result()
         except Exception as e:
             # XXX This is really really bad
             raise CancelFailedError() from e
