@@ -3,7 +3,7 @@ import threading
 import unittest
 
 from payment_terminal.drivers.bbs.connection import (
-    read_frame, BBSMsgRouterConnection,
+    read_frame, write_frame, BBSMsgRouterConnection,
 )
 
 
@@ -31,6 +31,11 @@ class TestBBSConnection(unittest.TestCase):
         port = io.BytesIO(b'\x00\x09trunca')
         # TODO more specific
         self.assertRaises(Exception, read_frame, port)
+
+    def test_write_one(self):
+        port = io.BytesIO()
+        write_frame(port, b'hello world')
+        self.assertEqual(port.getvalue(), b'\x00\x0bhello world')
 
     def test_startup_shutdown(self):
         class CloseableFile(object):
