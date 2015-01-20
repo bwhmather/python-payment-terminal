@@ -37,6 +37,12 @@ class TestBBSConnection(unittest.TestCase):
         write_frame(port, b'hello world')
         self.assertEqual(port.getvalue(), b'\x00\x0bhello world')
 
+    def test_write_two(self):
+        port = io.BytesIO()
+        write_frame(port, b'12345')
+        write_frame(port, b'123456')
+        self.assertEqual(port.getvalue(), b'\x00\x0512345\x00\x06123456')
+
     def test_startup_shutdown(self):
         class CloseableFile(object):
             def __init__(self):
