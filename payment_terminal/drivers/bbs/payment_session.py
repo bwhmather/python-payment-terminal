@@ -130,6 +130,12 @@ class BBSPaymentSession(BBSSession, PaymentSession):
         else:
             raise CancelFailedError()
 
+    def cancelled(self):
+        return self._future.cancelled()
+
+    def running(self):
+        return self._future.running()
+
     def result(self, timeout=None):
         try:
             return self._future.result(timeout=timeout)
