@@ -177,7 +177,7 @@ class LocalModeMessage(BBSMessage):
         b'\x32': 'not_verified',
         # transaction is a Loyalty Transaction. Used for data capture
         # transactions. No accounts are debited or credited
-        b'\x32': 'loyalty_transaction',
+        b'\x33': 'loyalty_transaction',
     }), delimiter=b';')
 
     # 3 byte, numeric data. The current session number received from the HOST.
