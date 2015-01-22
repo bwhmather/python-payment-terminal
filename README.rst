@@ -3,7 +3,11 @@ Python Payment Terminal
 
 |build-status| |coverage|
 
-Library for interacting with card readers
+Library for interacting with card readers.
+
+Currently supports communicating with BBS card readers using the application layer protocol.
+
+Developed at `Newman Online Ltd`_ and open sourced with permission.
 
 
 .. |build-status| image:: https://travis-ci.org/bwhmather/python-payment-terminal.png?branch=develop
