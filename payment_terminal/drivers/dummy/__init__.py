@@ -1,12 +1,12 @@
 from threading import Thread, Lock, Event
 
-import logging
-log = logging.getLogger('payment_terminal')
-
 from payment_terminal.base import Terminal, PaymentSession, Payment
 from payment_terminal.exceptions import (
     SessionCancelledError, SessionCompletedError,
 )
+
+import logging
+log = logging.getLogger('payment_terminal')
 
 
 class DummyPaymentSession(PaymentSession):

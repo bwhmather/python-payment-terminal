@@ -1,8 +1,5 @@
 from collections import OrderedDict
 
-import logging
-log = logging.getLogger('payment_terminal')
-
 from .fields import (
     BBSField, DelimitedField,
     ConstantField, EnumField,
@@ -10,6 +7,9 @@ from .fields import (
     TextField, FormattedTextField,
     DateTimeField,
 )
+
+import logging
+log = logging.getLogger('payment_terminal')
 
 
 class BBSMessageMeta(type):

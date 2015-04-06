@@ -3,11 +3,11 @@ import queue
 from threading import Thread, Lock
 from concurrent.futures import Future
 
-import logging
-log = logging.getLogger('payment_terminal')
-
 from payment_terminal.exceptions import SessionCompletedError, ConnectionError
 from . import messages
+
+import logging
+log = logging.getLogger('payment_terminal')
 
 
 def read_frame(port):

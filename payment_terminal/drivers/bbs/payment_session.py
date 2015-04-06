@@ -1,15 +1,15 @@
 import concurrent.futures
 from threading import Lock
 
-import logging
-log = logging.getLogger('payment_terminal')
-
 from payment_terminal.base import PaymentSession, Payment
 from payment_terminal.exceptions import (
     SessionCompletedError, SessionCancelledError, CancelFailedError,
 )
 
 from .session import BBSSession
+
+import logging
+log = logging.getLogger('payment_terminal')
 
 
 RUNNING = 'RUNNING'

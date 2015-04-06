@@ -1,13 +1,13 @@
 import socket
 from urllib.parse import urlparse
 
-import logging
-log = logging.getLogger('payment_terminal')
-
 from payment_terminal.base import Terminal
 
 from .connection import BBSMsgRouterConnection
 from .payment_session import BBSPaymentSession
+
+import logging
+log = logging.getLogger('payment_terminal')
 
 
 class BBSMsgRouterTerminal(Terminal):
