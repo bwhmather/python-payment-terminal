@@ -16,3 +16,4 @@ Developed at `Newman Online Ltd`_ and open sourced with permission.
 .. |coverage| image:: https://coveralls.io/repos/bwhmather/python-payment-terminal/badge.png?branch=develop
     :target: https://coveralls.io/r/bwhmather/python-payment-terminal?branch=develop
     :alt: Coverage
+.. _Newman Online Ltd: http://newmanonline.org.uk
